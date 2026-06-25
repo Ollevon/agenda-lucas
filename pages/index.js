@@ -605,7 +605,7 @@ export default function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const fileRef = useRef(null);
   const [messages, setMessages] = useState([
-    { role: "bot", text: "Manda os seus compromissos do jeito que vierem na cabeça — eu organizo. Ex: \"edição do casamento Gabriel Marques até sexta\" ou \"talvez captação pra Arbo na quarta\"." },
+    { role: "bot", text: `Manda os seus compromissos do jeito que vierem na cabeça — eu organizo. Ex: "edição do casamento Gabriel Marques até sexta" ou "talvez captação pra Arbo na quarta".` },
   ]);
   const logRef = useRef(null);
   const taRef = useRef(null);
