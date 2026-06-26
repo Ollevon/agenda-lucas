@@ -94,6 +94,16 @@ const STYLE = `
 .tab-ic{display:flex; align-items:center}
 .tab-n{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--low); background:var(--void); padding:1px 6px; border-radius:6px; min-width:20px; text-align:center}
 .tab.on .tab-n{color:var(--mid)}
+.tab-alert{color:#e89090}
+.tab-alert .tab-n{color:#e89090; background:rgba(224,106,106,.14)}
+.tab-alert:hover{color:#ffb3b3; background:rgba(224,106,106,.1)}
+.tab-alert.on{color:#ffc2c2; background:rgba(224,106,106,.14); border-color:rgba(224,106,106,.5)}
+.tab-alert.on .tab-n{color:#ffc2c2; background:rgba(224,106,106,.25)}
+.verif-banner{display:flex; align-items:flex-start; gap:12px; background:rgba(224,106,106,.08); border:1px solid rgba(224,106,106,.3); border-radius:11px; padding:13px 15px; margin-bottom:16px}
+.verif-ic{width:34px; height:34px; flex-shrink:0; border-radius:8px; background:rgba(224,106,106,.15); color:var(--danger); display:flex; align-items:center; justify-content:center}
+.verif-ic svg{width:18px; height:18px}
+.verif-t{font-size:13.5px; font-weight:600; color:#ffc2c2}
+.verif-d{font-size:12px; color:var(--mid); margin-top:3px; line-height:1.45}
 .ag-tools{display:flex; align-items:center; gap:7px; margin-left:auto; padding-left:8px}
 .seg{display:flex; background:var(--void); border:1px solid var(--line); border-radius:8px; overflow:hidden}
 .seg button{font-family:'Inter',sans-serif; font-size:12px; font-weight:500; color:var(--mid); background:transparent; border:none; padding:6px 11px; cursor:pointer; transition:all .14s}
@@ -705,6 +715,11 @@ function fmtMulti(dates, hora) {
 }
 
 
+function isOverdue(c) {
+  if (c.status === "concluido") return false;
+  const n = dayDiff(repISO(c));
+  return n !== null && n < 0;
+}
 function bucketOf(c) {
   if (c.status === "concluido") return "concluido";
   const n = dayDiff(repISO(c));
@@ -1247,6 +1262,7 @@ function AppInner() {
 
   // filtering
   const visible = items.filter(c => {
+    if (cat === "verificacao") return isOverdue(c);
     if (cat !== "tudo" && catOf(c) !== cat) return false;
     if (!showDone && c.status === "concluido") return false;
     if (onlyIncerto && c.status !== "incerto") return false;
@@ -1314,11 +1330,13 @@ function AppInner() {
       return da < db ? -1 : 1;
     })[0] || null;
 
+  const nVerif = items.filter(isOverdue).length;
   const TABS = [
     { id: "tudo", label: "Tudo", n: showDone ? items.length : nAtivos },
     { id: "trabalho", label: "Trabalho", n: catCount("trabalho") },
     { id: "reuniao", label: "Reuniões", n: catCount("reuniao") },
     { id: "pessoal", label: "Pessoal", n: catCount("pessoal") },
+    ...(nVerif > 0 ? [{ id: "verificacao", label: "Verificação", n: nVerif, alert: true }] : []),
   ];
   const hints = [
     ["edição do ", "casamento Gabriel Marques", " até sexta"],
@@ -1557,9 +1575,12 @@ function AppInner() {
 
         <div className="ag-tabs">
           {TABS.map(t => (
-            <button key={t.id} className={"tab" + (cat === t.id ? " on" : "")} onClick={() => setCat(t.id)}
-              style={cat === t.id && t.id !== "tudo" ? { "--tabc": CATEGORIA[t.id].color } : {}}>
-              {t.id !== "tudo" && <span className="tab-ic"><CatIcon name={CATEGORIA[t.id].icon} color={cat === t.id ? CATEGORIA[t.id].color : "var(--mid)"} size={13} /></span>}
+            <button key={t.id} className={"tab" + (cat === t.id ? " on" : "") + (t.alert ? " tab-alert" : "")} onClick={() => { setCat(t.id); if (t.id === "verificacao") setView("lista"); }}
+              style={cat === t.id && t.id !== "tudo" && CATEGORIA[t.id] ? { "--tabc": CATEGORIA[t.id].color } : {}}>
+              {t.id === "verificacao" && (
+                <span className="tab-ic"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+              )}
+              {t.id !== "tudo" && t.id !== "verificacao" && CATEGORIA[t.id] && <span className="tab-ic"><CatIcon name={CATEGORIA[t.id].icon} color={cat === t.id ? CATEGORIA[t.id].color : "var(--mid)"} size={13} /></span>}
               {t.label}
               <span className="tab-n">{t.n}</span>
             </button>
@@ -1578,6 +1599,17 @@ function AppInner() {
         </div>
 
         <div className={"ag-board scroll" + (view === "mapa" ? " board-map" : "") + (view === "mes" ? " board-month" : "")}>
+          {cat === "verificacao" && (
+            <div className="verif-banner">
+              <div className="verif-ic">
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+              </div>
+              <div>
+                <div className="verif-t">Passaram da data e não foram concluídos</div>
+                <div className="verif-d">Marque como concluído, remarque para uma nova data, ou exclua se não vale mais.</div>
+              </div>
+            </div>
+          )}
           {view === "lista" && (
             visible.length === 0 ? (
               <div className="empty">
