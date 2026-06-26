@@ -51,6 +51,10 @@ const STYLE = `
 .ag-head{padding:20px 26px 16px; border-bottom:1px solid var(--line); flex-shrink:0}
 .ag-head.mini{padding:10px 26px}
 .head-toggle{width:30px; height:30px; border-radius:7px; background:var(--raised); border:1px solid var(--line); color:var(--mid); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .14s}
+.head-pause{width:30px; height:30px; border-radius:7px; background:rgba(230,138,62,.12); border:1px solid rgba(230,138,62,.35); color:var(--brand); cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .14s; animation:pauseGlow 4s ease-in-out infinite}
+.head-pause:hover{background:rgba(230,138,62,.22); border-color:var(--brand)}
+.head-pause svg{width:16px; height:16px}
+@keyframes pauseGlow{0%,100%{box-shadow:0 0 0 0 rgba(230,138,62,0)} 50%{box-shadow:0 0 12px -2px rgba(230,138,62,.5)}}
 .head-toggle:hover{color:var(--hi); border-color:#4a4e55}
 .head-toggle svg{width:16px; height:16px}
 .ag-brandrow{display:flex; align-items:center; gap:12px}
@@ -94,15 +98,15 @@ const STYLE = `
 .tab-ic{display:flex; align-items:center}
 .tab-n{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--low); background:var(--void); padding:1px 6px; border-radius:6px; min-width:20px; text-align:center}
 .tab.on .tab-n{color:var(--mid)}
-.tab-alert{color:#e89090}
-.tab-alert .tab-n{color:#e89090; background:rgba(224,106,106,.14)}
-.tab-alert:hover{color:#ffb3b3; background:rgba(224,106,106,.1)}
-.tab-alert.on{color:#ffc2c2; background:rgba(224,106,106,.14); border-color:rgba(224,106,106,.5)}
-.tab-alert.on .tab-n{color:#ffc2c2; background:rgba(224,106,106,.25)}
-.verif-banner{display:flex; align-items:flex-start; gap:12px; background:rgba(224,106,106,.08); border:1px solid rgba(224,106,106,.3); border-radius:11px; padding:13px 15px; margin-bottom:16px}
-.verif-ic{width:34px; height:34px; flex-shrink:0; border-radius:8px; background:rgba(224,106,106,.15); color:var(--danger); display:flex; align-items:center; justify-content:center}
+.tab-alert{color:#d8b657}
+.tab-alert .tab-n{color:#d8b657; background:rgba(224,179,62,.14)}
+.tab-alert:hover{color:#ecca6e; background:rgba(224,179,62,.1)}
+.tab-alert.on{color:#f0d27e; background:rgba(224,179,62,.14); border-color:rgba(224,179,62,.5)}
+.tab-alert.on .tab-n{color:#f0d27e; background:rgba(224,179,62,.25)}
+.verif-banner{display:flex; align-items:flex-start; gap:12px; background:rgba(224,179,62,.08); border:1px solid rgba(224,179,62,.3); border-radius:11px; padding:13px 15px; margin-bottom:16px}
+.verif-ic{width:34px; height:34px; flex-shrink:0; border-radius:8px; background:rgba(224,179,62,.15); color:var(--incerto); display:flex; align-items:center; justify-content:center}
 .verif-ic svg{width:18px; height:18px}
-.verif-t{font-size:13.5px; font-weight:600; color:#ffc2c2}
+.verif-t{font-size:13.5px; font-weight:600; color:#f0d27e}
 .verif-d{font-size:12px; color:var(--mid); margin-top:3px; line-height:1.45}
 .ag-tools{display:flex; align-items:center; gap:7px; margin-left:auto; padding-left:8px}
 .seg{display:flex; background:var(--void); border:1px solid var(--line); border-radius:8px; overflow:hidden}
@@ -279,6 +283,35 @@ select.ef-input{cursor:pointer}
 .lo-switch.on span{transform:translateX(18px); background:#10120f}
 .lo-reset{width:100%; margin-top:16px; padding:10px; background:transparent; border:1px solid var(--line); border-radius:8px; color:var(--mid); font-size:13px; font-weight:500; cursor:pointer; transition:all .14s}
 .lo-reset:hover{color:var(--hi); border-color:#4a4e55}
+
+/* pausa criativa */
+.pause-modal{max-width:460px}
+.pause-tabs{display:flex; gap:6px; padding:0 16px 14px; border-bottom:1px solid var(--line)}
+.pause-tabs button{flex:1; padding:9px; border:1px solid var(--line); background:var(--void); color:var(--mid); font-family:'Inter',sans-serif; font-size:13px; font-weight:500; border-radius:8px; cursor:pointer; transition:all .14s}
+.pause-tabs button:hover{color:var(--hi)}
+.pause-tabs button.on{background:var(--brand); color:#10120f; font-weight:600; border-color:var(--brand)}
+.pause-body{padding:26px 22px 30px}
+/* provocação */
+.prompt-area{display:flex; flex-direction:column; align-items:center; text-align:center; gap:18px}
+.prompt-quote{font-family:'Space Grotesk',sans-serif; font-size:54px; line-height:.5; color:var(--brand); opacity:.5; height:24px}
+.prompt-text{font-size:19px; line-height:1.5; color:var(--hi); font-weight:500; max-width:360px; min-height:90px; display:flex; align-items:center; justify-content:center}
+.prompt-new{display:inline-flex; align-items:center; gap:8px; padding:10px 18px; background:var(--raised); border:1px solid var(--line); border-radius:8px; color:var(--mid); font-size:13px; font-weight:500; cursor:pointer; transition:all .14s}
+.prompt-new:hover{color:var(--brand); border-color:rgba(230,138,62,.4)}
+.prompt-new svg{width:15px; height:15px}
+/* respiração */
+.breathe-area{display:flex; flex-direction:column; align-items:center; gap:22px}
+.breathe-orb{position:relative; width:150px; height:150px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle, rgba(230,138,62,.18), rgba(230,138,62,.04)); transition:transform .3s}
+.breathe-orb-in{position:absolute; inset:0; border-radius:50%; border:2px solid rgba(230,138,62,.5); box-shadow:0 0 30px -4px rgba(230,138,62,.4)}
+.breathe-word{position:relative; font-family:'Space Grotesk',sans-serif; font-size:18px; font-weight:600; color:var(--brand); z-index:1}
+.breathe-orb.idle{transform:scale(.85)}
+.breathe-orb.inspire{animation:bInspire 4s ease-in-out forwards}
+.breathe-orb.segura{transform:scale(1.25)}
+.breathe-orb.expira{animation:bExpire 8s ease-in-out forwards}
+@keyframes bInspire{from{transform:scale(.85)} to{transform:scale(1.25)}}
+@keyframes bExpire{from{transform:scale(1.25)} to{transform:scale(.85)}}
+.breathe-btn{padding:11px 24px; background:var(--brand); color:#10120f; border:none; border-radius:8px; font-size:14px; font-weight:600; cursor:pointer; transition:opacity .14s}
+.breathe-btn:hover{opacity:.9}
+.breathe-hint{font-size:12px; color:var(--low); text-align:center; max-width:280px; line-height:1.5}
 
 /* local no cartão */
 .job-local{display:inline-flex; align-items:center; gap:5px; margin-top:7px; font-size:12px; color:var(--andamento); text-decoration:none; max-width:100%; transition:color .14s}
@@ -776,6 +809,58 @@ async function askAI(text, commitments) {
 /* ---------- app ---------- */
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+// provocações criativas — exercícios rápidos pra recarregar entre edições
+const PROMPTS = [
+  "Imagine a trilha sonora de um pôr do sol em Saquarema. Que instrumento entra primeiro?",
+  "Edite uma cena mental usando só os sons que você ouve agora na sua casa.",
+  "Se o seu próximo projeto fosse um filme mudo, como você contaria a história só com imagem?",
+  "Escolha um objeto perto de você. Filme ele mentalmente em 3 ângulos diferentes.",
+  "Que cor define o seu humor agora? Imagine um color grade inteiro a partir dela.",
+  "Conte uma história em 3 cortes. Começo, virada, fim. Sem palavras.",
+  "Pegue a última música que ouviu. Que tipo de vídeo ela pediria?",
+  "Imagine uma transição impossível entre dois lugares da sua cidade.",
+  "Se você tivesse que gravar algo agora, em 5 minutos, sem sair do lugar — o que seria?",
+  "Descreva o ritmo de edição de uma manhã preguiçosa. Cortes longos ou curtos?",
+  "Que som você colocaria no silêncio total de uma cena?",
+  "Imagine o trailer da sua semana. Quais 3 imagens entrariam?",
+  "Olhe pela janela. Enquadre o que vê como se fosse a primeira cena de um documentário.",
+  "Inverta um clichê visual que você sempre usa. Como ficaria ao contrário?",
+  "Escolha uma emoção. Que movimento de câmera a representa?",
+];
+const pickPrompt = (prev) => {
+  let p; do { p = PROMPTS[Math.floor(Math.random() * PROMPTS.length)]; } while (p === prev && PROMPTS.length > 1);
+  return p;
+};
+
+const SPARKS = [
+  "Edite uma cena mental usando só os sons que você ouve agora.",
+  "Que trilha sonora você poria num pôr do sol em Saquarema?",
+  "Imagine o mesmo take em preto e branco. O que muda na emoção?",
+  "Escolha um objeto perto de você e pense em 3 ângulos pra filmá-lo.",
+  "Que cor define o seu dia hoje? Por quê?",
+  "Conte uma história de 6 palavras sobre o último job que entregou.",
+  "Se este momento fosse um plano-sequência, por onde a câmera passaria?",
+  "Qual música combinaria com a luz da janela agora?",
+  "Pense num corte seco perfeito que você viu num filme. O que o fez funcionar?",
+  "Descreva o som do silêncio do seu lugar favorito.",
+  "Que emoção você quer que o próximo cliente sinta nos 3 primeiros segundos?",
+  "Reimagine sua manhã como a abertura de um documentário.",
+  "Escolha uma palavra. Como você a traduziria em movimento de câmera?",
+  "Qual seria o b-roll perfeito pra ilustrar 'recomeço'?",
+  "Se você só pudesse usar luz natural pelo resto do mês, o que mudaria?",
+  "Pense numa transição entre dois momentos opostos do seu dia.",
+  "Que textura você filmaria em close pra abrir um vídeo sobre Saquarema?",
+  "Imagine o trailer da sua semana. Qual é a cena de clímax?",
+  "Escolha um som da natureza e construa uma cena mental ao redor dele.",
+  "Qual enquadramento contaria sua rotina sem mostrar seu rosto?",
+];
+const randomSpark = (prev) => {
+  let s = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+  let guard = 0;
+  while (s === prev && guard++ < 6) s = SPARKS[Math.floor(Math.random() * SPARKS.length)];
+  return s;
+};
+
 // carrega o Leaflet (CSS+JS) uma vez via CDN
 function useLeaflet() {
   const [ready, setReady] = useState(false);
@@ -901,6 +986,15 @@ function AppInner() {
   const [chatW, setChatW] = useState(340);
   const resizing = useRef(false);
   const [layoutOpen, setLayoutOpen] = useState(false);
+  const [pauseOpen, setPauseOpen] = useState(false);
+  const [pauseTab, setPauseTab] = useState("prompt"); // prompt | breathe
+  const [prompt, setPrompt] = useState(null);
+  const [breathing, setBreathing] = useState(false);
+  const [breathPhase, setBreathPhase] = useState("inspire");
+  const [sparkOpen, setSparkOpen] = useState(false);
+  const [spark, setSpark] = useState("");
+  const [sparkBusy, setSparkBusy] = useState(false);
+  const [breathOpen, setBreathOpen] = useState(false);
   const [prefs, setPrefs] = useState({
     consoleSide: "right",   // right | left
     showStats: true,        // contadores no topo
@@ -1024,6 +1118,26 @@ function AppInner() {
     e.preventDefault();
   };
 
+  const openPause = () => {
+    if (!prompt) setPrompt(pickPrompt(null));
+    setPauseOpen(true);
+  };
+
+  // ciclo de respiração 4-7-8 (inspira 4s, segura 7s, expira 8s)
+  useEffect(() => {
+    if (!breathing) return;
+    const seq = [["inspire", 4000], ["segura", 7000], ["expira", 8000]];
+    let i = 0;
+    setBreathPhase(seq[0][0]);
+    const next = () => {
+      i = (i + 1) % seq.length;
+      setBreathPhase(seq[i][0]);
+      timer = setTimeout(next, seq[i][1]);
+    };
+    let timer = setTimeout(next, seq[0][1]);
+    return () => clearTimeout(timer);
+  }, [breathing]);
+
   // salva preferências de layout sempre que mudarem
   const prefsReady = useRef(false);
   const sideRef = useRef(prefs.consoleSide);
@@ -1135,6 +1249,25 @@ function AppInner() {
     }
     setBusy(false);
   }
+
+  // ócio criativo
+  const openSpark = () => { setSpark(randomSpark("")); setSparkOpen(true); };
+  const nextSpark = () => setSpark(s => randomSpark(s));
+  const aiSpark = async () => {
+    setSparkBusy(true);
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: "__spark__", ctx: "" }),
+      });
+      const data = await res.json();
+      let raw = (data.text || "").replace(/```json/gi, "").replace(/```/g, "").trim();
+      try { const o = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1)); if (o.spark) setSpark(o.spark); else nextSpark(); }
+      catch (e) { nextSpark(); }
+    } catch (e) { nextSpark(); }
+    setSparkBusy(false);
+  };
+  const lockScreen = () => { setSplashOut(false); setSplash(true); };
 
   // manual quick actions
   const setStatus = (id, status) => setItems(p => p.map(x => x.id === id ? { ...x, status } : x));
@@ -1336,7 +1469,7 @@ function AppInner() {
     { id: "trabalho", label: "Trabalho", n: catCount("trabalho") },
     { id: "reuniao", label: "Reuniões", n: catCount("reuniao") },
     { id: "pessoal", label: "Pessoal", n: catCount("pessoal") },
-    ...(nVerif > 0 ? [{ id: "verificacao", label: "Verificação", n: nVerif, alert: true }] : []),
+    ...(nVerif > 0 ? [{ id: "verificacao", label: "A verificar", n: nVerif, alert: true }] : []),
   ];
   const hints = [
     ["edição do ", "casamento Gabriel Marques", " até sexta"],
@@ -1522,6 +1655,12 @@ function AppInner() {
               <div className="d1">{WD[today.getDay()]}, {today.getDate()} {MO[today.getMonth()]}</div>
               <div className="d2 mono">{todayISO()}</div>
             </div>
+            <button className="head-pause" onClick={openPause} title="Pausa criativa" aria-label="Pausa criativa">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M17.7 6.3l1.4-1.4M4.9 19.1l1.4-1.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="2" /></svg>
+            </button>
+            <button className="head-toggle" onClick={() => { setSplashOut(false); setSplash(true); }} title="Bloquear (voltar à tela inicial)" aria-label="Bloquear tela">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+            </button>
             <button className="head-toggle" onClick={() => setHeadColl(v => !v)} title={headColl ? "Mostrar resumo" : "Recolher topo"} aria-label={headColl ? "Mostrar resumo" : "Recolher topo"}>
               <svg viewBox="0 0 24 24" fill="none">
                 {headColl
@@ -1578,7 +1717,7 @@ function AppInner() {
             <button key={t.id} className={"tab" + (cat === t.id ? " on" : "") + (t.alert ? " tab-alert" : "")} onClick={() => { setCat(t.id); if (t.id === "verificacao") setView("lista"); }}
               style={cat === t.id && t.id !== "tudo" && CATEGORIA[t.id] ? { "--tabc": CATEGORIA[t.id].color } : {}}>
               {t.id === "verificacao" && (
-                <span className="tab-ic"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
+                <span className="tab-ic"><svg viewBox="0 0 24 24" fill="none" width="13" height="13"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M8.5 12.5l2.2 2.2 4.8-4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
               )}
               {t.id !== "tudo" && t.id !== "verificacao" && CATEGORIA[t.id] && <span className="tab-ic"><CatIcon name={CATEGORIA[t.id].icon} color={cat === t.id ? CATEGORIA[t.id].color : "var(--mid)"} size={13} /></span>}
               {t.label}
@@ -1602,11 +1741,11 @@ function AppInner() {
           {cat === "verificacao" && (
             <div className="verif-banner">
               <div className="verif-ic">
-                <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" /><path d="M8.5 12.5l2.2 2.2 4.8-4.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
               <div>
-                <div className="verif-t">Passaram da data e não foram concluídos</div>
-                <div className="verif-d">Marque como concluído, remarque para uma nova data, ou exclua se não vale mais.</div>
+                <div className="verif-t">Passaram da data sem serem marcados como concluídos</div>
+                <div className="verif-d">Confira cada um: marque como concluído se já foi feito, remarque se mudou de data, ou exclua se não vale mais.</div>
               </div>
             </div>
           )}
@@ -1854,6 +1993,47 @@ function AppInner() {
               {(eventsByDay[selDay] || []).length
                 ? (eventsByDay[selDay]).map(c => renderJob(c, selDay))
                 : <div className="modal-empty">Nenhum compromisso neste dia.</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {pauseOpen && (
+        <div className="modal-bk" onClick={() => { setPauseOpen(false); setBreathing(false); }}>
+          <div className="modal pause-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-h">
+              <div className="modal-ht">
+                <div className="modal-d disp">Pausa criativa</div>
+                <div className="modal-s">Um respiro pra voltar afiado</div>
+              </div>
+              <button className="modal-x" onClick={() => { setPauseOpen(false); setBreathing(false); }} aria-label="Fechar">✕</button>
+            </div>
+            <div className="pause-tabs">
+              <button className={pauseTab === "prompt" ? "on" : ""} onClick={() => { setPauseTab("prompt"); setBreathing(false); }}>Provocação</button>
+              <button className={pauseTab === "breathe" ? "on" : ""} onClick={() => setPauseTab("breathe")}>Respiração</button>
+            </div>
+            <div className="pause-body">
+              {pauseTab === "prompt" ? (
+                <div className="prompt-area">
+                  <div className="prompt-quote">"</div>
+                  <div className="prompt-text">{prompt}</div>
+                  <button className="prompt-new" onClick={() => setPrompt(p => pickPrompt(p))}>
+                    <svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 14-5.3L20 8M20 4v4h-4M20 12a8 8 0 0 1-14 5.3L4 16M4 20v-4h4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                    Outra provocação
+                  </button>
+                </div>
+              ) : (
+                <div className="breathe-area">
+                  <div className={"breathe-orb " + (breathing ? breathPhase : "idle")}>
+                    <div className="breathe-orb-in" />
+                    <span className="breathe-word">{breathing ? (breathPhase === "inspire" ? "Inspire" : breathPhase === "segura" ? "Segure" : "Expire") : "Pronto?"}</span>
+                  </div>
+                  <button className="breathe-btn" onClick={() => setBreathing(v => !v)}>
+                    {breathing ? "Parar" : "Começar (4-7-8)"}
+                  </button>
+                  <div className="breathe-hint">Inspire em 4s, segure 7s, expire 8s. Acompanhe o círculo.</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
