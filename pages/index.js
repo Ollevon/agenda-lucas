@@ -225,9 +225,12 @@ const STYLE = `
 .cal-cell{position:relative}
 .week-col.confl{border-color:rgba(255,107,107,.5)}
 .week-warn{margin-left:auto; font-size:12px}
-.conflict-banner{display:flex; align-items:center; gap:10px; width:calc(100% - 52px); margin:14px 26px 0; padding:11px 14px; background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.4); border-radius:11px; cursor:pointer; color:#ffc2c2; font-size:13px; font-weight:500; text-align:left; transition:background .14s}
-.conflict-banner:hover{background:rgba(255,107,107,.17)}
-.cb-ic{font-size:15px; flex-shrink:0}
+.confl-signal{position:relative; display:inline-flex; align-items:center; gap:7px; padding:7px 12px 7px 10px; border-radius:8px; background:rgba(224,106,106,.1); border:1px solid rgba(224,106,106,.38); color:#f0a8a8; cursor:pointer; transition:all .15s; flex-shrink:0}
+.confl-signal:hover{background:rgba(224,106,106,.18); border-color:rgba(224,106,106,.6); color:#ffc2c2}
+.confl-signal svg{width:15px; height:15px}
+.confl-signal-n{font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:#fff}
+.confl-signal-dot{position:absolute; top:-4px; left:-4px; width:9px; height:9px; border-radius:99px; background:var(--danger); box-shadow:0 0 0 0 rgba(224,106,106,.55); animation:conflPulse 2s infinite}
+@keyframes conflPulse{0%{box-shadow:0 0 0 0 rgba(224,106,106,.5)} 70%{box-shadow:0 0 0 7px rgba(224,106,106,0)} 100%{box-shadow:0 0 0 0 rgba(224,106,106,0)}}
 .modal-warn{background:rgba(255,107,107,.1); border:1px solid rgba(255,107,107,.4); border-radius:10px; padding:11px 13px; margin-bottom:14px; font-size:12.5px; line-height:1.5; color:#ffd2d2}
 .modal-warn strong{color:var(--danger)}
 .modal-warn b{color:#fff; font-weight:600}
@@ -302,7 +305,6 @@ const STYLE = `
   .cal-label{font-size:16px}
   .week{display:flex; overflow-x:auto; gap:8px}
   .week-col{min-width:140px; flex-shrink:0}
-  .conflict-banner{margin:12px 18px 0; width:calc(100% - 36px)}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important}}
 
@@ -608,7 +610,7 @@ function AppInner() {
   const [loaded, setLoaded] = useState(false);
   const [cat, setCat] = useState("tudo");          // tudo | trabalho | reuniao | pessoal
   const [groupMode, setGroupMode] = useState("data"); // data | cliente
-  const [view, setView] = useState("lista");          // lista | mes | semana
+  const [view, setView] = useState("mes");          // lista | mes | semana
   const [cursor, setCursor] = useState(todayISO());    // âncora do calendário
   const [selDay, setSelDay] = useState(null);          // dia aberto no modal
   const [rescheduleId, setRescheduleId] = useState(null);
@@ -1115,6 +1117,14 @@ function AppInner() {
               <div className="ag-title disp">Agenda</div>
               <div className="ag-sub">sala de corte · Lucas</div>
             </div>
+            {conflictDays.size > 0 && (
+              <button className="confl-signal" onClick={() => setSelDay([...conflictDays].sort()[0])}
+                title={conflictDays.size === 1 ? "1 dia com conflito de trabalho — clique para resolver" : `${conflictDays.size} dias com conflito de trabalho — clique para resolver`}>
+                <span className="confl-signal-dot" />
+                <svg viewBox="0 0 24 24" fill="none"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                <span className="confl-signal-n">{conflictDays.size}</span>
+              </button>
+            )}
             <div className="ag-date">
               <div className="d1">{WD[today.getDay()]}, {today.getDate()} {MO[today.getMonth()]}</div>
               <div className="d2 mono">{todayISO()}</div>
@@ -1188,13 +1198,6 @@ function AppInner() {
             </button>
           </div>
         </div>
-
-        {conflictDays.size > 0 && (
-          <button className="conflict-banner" onClick={() => setSelDay([...conflictDays].sort()[0])}>
-            <span className="cb-ic">⚠</span>
-            <span>{conflictDays.size === 1 ? "1 dia com mais de um trabalho confirmado" : `${conflictDays.size} dias com mais de um trabalho confirmado`} — revisar e decidir</span>
-          </button>
-        )}
 
         <div className="ag-board scroll">
           {view === "lista" && (
