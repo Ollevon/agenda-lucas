@@ -147,6 +147,30 @@ const STYLE = `
 .ag-board.board-month{overflow:hidden; display:flex; flex-direction:column; padding-bottom:18px}
 .ag-board.board-month > .calnav{flex-shrink:0}
 .ag-board.board-month > .cal{flex:1; min-height:0}
+.ag-board.board-kanban{overflow:hidden; display:flex; flex-direction:column; padding-bottom:18px}
+
+/* kanban de concluídos por mês */
+.kanban{display:flex; gap:14px; height:100%; min-height:0; overflow-x:auto; overflow-y:hidden; padding-bottom:8px}
+.kb-col{flex:0 0 280px; display:flex; flex-direction:column; min-height:0; background:var(--void); border:1px solid var(--line); border-radius:12px; overflow:hidden}
+.kb-head{display:flex; align-items:center; gap:9px; padding:13px 15px; border-bottom:1px solid var(--line); flex-shrink:0; background:var(--panel)}
+.kb-title{font-size:14px; font-weight:600; color:var(--hi); text-transform:capitalize}
+.kb-count{margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--mid); background:var(--raised); padding:2px 8px; border-radius:6px}
+.kb-body{flex:1; min-height:0; overflow-y:auto; padding:10px; display:flex; flex-direction:column; gap:8px}
+.kb-card{position:relative; display:flex; background:var(--panel); border:1px solid var(--line); border-radius:9px; overflow:hidden; cursor:pointer; transition:border-color .14s}
+.kb-card:hover{border-color:#3a3f4a}
+.kb-card-bar{width:3px; flex-shrink:0}
+.kb-card-body{flex:1; min-width:0; padding:10px 12px}
+.kb-card-title{font-size:13px; font-weight:500; color:var(--hi); line-height:1.35}
+.kb-card-meta{display:flex; align-items:center; gap:10px; margin-top:6px; flex-wrap:wrap}
+.kb-card-client{display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--mid)}
+.kb-card-client .dot{width:7px; height:7px; border-radius:99px}
+.kb-card-date{font-size:10.5px; color:var(--low)}
+.kb-reopen{position:absolute; top:8px; right:8px; width:24px; height:24px; border-radius:6px; background:var(--raised); border:1px solid var(--line); color:var(--mid); cursor:pointer; font-size:14px; opacity:0; transition:opacity .14s, color .14s}
+.kb-card:hover .kb-reopen{opacity:1}
+.kb-reopen:hover{color:var(--brand); border-color:rgba(230,138,62,.4)}
+@media (max-width:860px){
+  .kb-col{flex:0 0 240px}
+}
 .grp,.cal,.week,.mapview{animation:viewFade .35s ease both}
 @keyframes viewFade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
 .grp{margin-bottom:26px}
@@ -212,6 +236,9 @@ const STYLE = `
 .cal-cell{min-height:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; display:flex; flex-direction:column; gap:4px; cursor:default; transition:border-color .14s; overflow:hidden}
 .cal-cell:hover{border-color:#333843}
 .cal-cell.dim{opacity:.4}
+.cal-cell.past{background:var(--void); opacity:.55}
+.cal-cell.past .cal-dn{color:var(--low)}
+.cal-cell.past.today{opacity:1}
 .cal-cell.today{border-color:var(--brand); box-shadow:inset 0 0 0 1px rgba(255,122,69,.4)}
 .cal-dn{font-size:12.5px; font-weight:600; color:var(--mid); font-family:'JetBrains Mono',monospace; padding-left:2px; flex-shrink:0}
 .cal-cell.today .cal-dn{color:var(--brand)}
@@ -1771,7 +1798,7 @@ function AppInner() {
           </div>
         </div>
 
-        <div className={"ag-board scroll" + (view === "mapa" ? " board-map" : "") + (view === "mes" ? " board-month" : "")}>
+        <div className={"ag-board scroll" + (view === "mapa" ? " board-map" : "") + (view === "mes" ? " board-month" : "") + (view === "feitos" ? " board-kanban" : "")}>
           {cat === "verificacao" && (
             <div className="verif-banner">
               <div className="verif-ic">
@@ -1829,9 +1856,10 @@ function AppInner() {
                       const evs = eventsByDay[iso] || [];
                       const inMonth = parseISO(iso).getMonth() === cur.getMonth();
                       const isToday = iso === todayISO();
+                      const isPast = iso < todayISO();
                       const shown = evs.slice(0, 3);
                       return (
-                        <div key={iso} className={"cal-cell" + (inMonth ? "" : " dim") + (isToday ? " today" : "") + (isConflictDay(iso) ? " confl" : "")}
+                        <div key={iso} className={"cal-cell" + (inMonth ? "" : " dim") + (isPast ? " past" : "") + (isToday ? " today" : "") + (isConflictDay(iso) ? " confl" : "")}
                           onClick={() => evs.length && openDay(iso)}>
                           {isConflictDay(iso) && <span className="cell-warn" title="Conflito de trabalho">⚠</span>}
                           <div className="cal-dn">{parseISO(iso).getDate()}</div>
@@ -1929,6 +1957,63 @@ function AppInner() {
               </div>
             );
           })()}
+
+          {view === "feitos" && (() => {
+            const done = items.filter(c => c.status === "concluido");
+            // agrupa por mês (YYYY-MM) usando a data representativa
+            const byMonth = {};
+            for (const c of done) {
+              const iso = repISO(c) || (datesOf(c)[0]);
+              const key = (typeof iso === "string" && iso.length >= 7) ? iso.slice(0, 7) : "sem-data";
+              (byMonth[key] = byMonth[key] || []).push(c);
+            }
+            const cols = Object.keys(byMonth).sort().reverse(); // mais recente primeiro
+            const monthLabel = (k) => {
+              if (k === "sem-data") return "Sem data";
+              const [y, m] = k.split("-");
+              return `${MONTHS_FULL[+m - 1]} ${y}`;
+            };
+            return done.length === 0 ? (
+              <div className="empty">
+                <div className="big">✓</div>
+                <h3>Nenhum trabalho concluído ainda</h3>
+                <p>Quando você marcar compromissos como concluídos, eles aparecem aqui organizados por mês — um histórico do que você já entregou.</p>
+              </div>
+            ) : (
+              <div className="kanban scroll">
+                {cols.map(k => {
+                  const arr = byMonth[k].sort((a, b) => (repISO(b) || "").localeCompare(repISO(a) || ""));
+                  const valor = arr.reduce((s, c) => s + (Number(c.valor) || 0), 0);
+                  return (
+                    <div key={k} className="kb-col">
+                      <div className="kb-head">
+                        <span className="kb-title disp">{monthLabel(k)}</span>
+                        <span className="kb-count">{arr.length}</span>
+                      </div>
+                      <div className="kb-body scroll">
+                        {arr.map(c => {
+                          const kc = CATEGORIA[catOf(c)].color;
+                          return (
+                            <div key={c.id} className="kb-card" onClick={() => openEdit(c)}>
+                              <span className="kb-card-bar" style={{ background: kc }} />
+                              <div className="kb-card-body">
+                                <div className="kb-card-title">{c.titulo}</div>
+                                <div className="kb-card-meta">
+                                  {c.cliente && <span className="kb-card-client"><span className="dot" style={{ background: clientColor(c.cliente) }} />{c.cliente}</span>}
+                                  <span className="kb-card-date mono">{fmtWhen(repISO(c), null)}</span>
+                                </div>
+                              </div>
+                              <button className="kb-reopen" onClick={(e) => { e.stopPropagation(); setStatus(c.id, "confirmado"); }} title="Reabrir (desmarcar concluído)">↺</button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         <div className={"pagebar" + (prefs.compactBar ? " compact-bar" : "")}>
@@ -1947,6 +2032,10 @@ function AppInner() {
           <button className={"page" + (view === "mapa" ? " on" : "")} onClick={() => setView("mapa")}>
             <svg viewBox="0 0 24 24" fill="none"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2zM9 3v16M15 5v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             <span>Mapa</span>
+          </button>
+          <button className={"page" + (view === "feitos" ? " on" : "")} onClick={() => setView("feitos")}>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <span>Feitos</span>
           </button>
         </div>
       </div>
