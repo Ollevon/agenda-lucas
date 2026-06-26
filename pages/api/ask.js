@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
   // Prompt enxuto. Agenda no formato: id|titulo|cliente|categoria|status|datas
   const sys = `Assistente de agenda audiovisual. HOJE=${today}(${wd}).
-Converta a mensagem em JSON. Resolva datas relativas p/ YYYY-MM-DD.
+Converta a mensagem em JSON. SEMPRE resolva qualquer referência de tempo (amanhã, sexta, dia 15, semana que vem, próxima terça, fim do mês) para datas reais YYYY-MM-DD com zero à esquerda (ex: 2026-07-05). Só use datas=[] se NÃO houver nenhuma menção de tempo na mensagem.
 categoria: trabalho(captação,edição,render,entrega,gravação)|reuniao(call,briefing)|pessoal(médico,academia,família)
 status: confirmado(padrão)|incerto(talvez,a confirmar)|em_andamento|concluido
 tipo: captacao|edicao|producao|reuniao|entrega|pessoal|outro. prioridade: media(padrão)|alta|baixa.
