@@ -96,7 +96,8 @@ const STYLE = `
 
 /* board */
 .ag-board{flex:1; overflow-y:auto; padding:18px 26px 80px}
-.ag-board.board-map{overflow:hidden; display:flex; padding-bottom:18px}
+.ag-board.board-map{overflow:hidden; display:flex; flex-direction:column; padding-bottom:18px}
+.ag-board.board-map > .mapview{flex:1; min-height:0}
 .grp,.cal,.week,.mapview{animation:viewFade .35s ease both}
 @keyframes viewFade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
 .grp{margin-bottom:26px}
@@ -239,8 +240,8 @@ select.ef-input{cursor:pointer}
 
 /* view de mapa */
 .mapview{display:flex; gap:14px; height:100%; min-height:0}
-.map-frame{flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); min-height:340px; position:relative}
-.leaflet-host{width:100%; height:100%; background:#1a1a1a}
+.map-frame{flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); min-height:360px; position:relative}
+.leaflet-host{position:absolute; inset:0; width:100%; height:100%; background:#1a1a1a}
 .map-loading{display:flex; align-items:center; justify-content:center; height:100%; color:var(--mid); font-size:13px}
 /* pin customizado com etiqueta de nome */
 .pin-wrap{position:relative; overflow:visible !important}
@@ -720,24 +721,28 @@ const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 
 
 // carrega o Leaflet (CSS+JS) uma vez via CDN
 function useLeaflet() {
-  const [ready, setReady] = useState(typeof window !== "undefined" && window.L);
+  const [ready, setReady] = useState(false);
   useEffect(() => {
-    if (typeof window === "undefined" || window.L) { setReady(true); return; }
+    if (typeof window === "undefined") return;
+    if (window.L) { setReady(true); return; }
     if (!document.getElementById("leaflet-css")) {
       const link = document.createElement("link");
       link.id = "leaflet-css"; link.rel = "stylesheet";
       link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
       document.head.appendChild(link);
     }
-    let s = document.getElementById("leaflet-js");
-    if (!s) {
-      s = document.createElement("script");
+    if (!document.getElementById("leaflet-js")) {
+      const s = document.createElement("script");
       s.id = "leaflet-js"; s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      s.onload = () => setReady(true);
       document.body.appendChild(s);
-    } else {
-      s.addEventListener("load", () => setReady(true));
     }
+    // polling: aguarda window.L existir (cobre o caso do script já estar carregando)
+    let tries = 0;
+    const iv = setInterval(() => {
+      if (window.L) { clearInterval(iv); setReady(true); }
+      else if (++tries > 100) clearInterval(iv); // desiste após ~10s
+    }, 100);
+    return () => clearInterval(iv);
   }, []);
   return ready;
 }
@@ -781,8 +786,17 @@ function MapView({ jobs, catColor, onPick, focus }) {
     });
     if (pts.length === 1) map.setView(pts[0], 14);
     else if (pts.length > 1) map.fitBounds(pts, { padding: [60, 60], maxZoom: 14 });
-    setTimeout(() => map.invalidateSize(), 100);
+    // recalcula tamanho várias vezes pra garantir render mesmo se o container assentar depois
+    [60, 200, 500, 900].forEach(ms => setTimeout(() => { try { map.invalidateSize(); } catch (e) {} }, ms));
   }, [ready, jobs, catColor, onPick]);
+
+  // recalcula quando o container muda de tamanho (troca de aba, resize)
+  useEffect(() => {
+    if (!ready || !elRef.current || !mapRef.current) return;
+    const ro = new ResizeObserver(() => { try { mapRef.current.invalidateSize(); } catch (e) {} });
+    ro.observe(elRef.current);
+    return () => ro.disconnect();
+  }, [ready]);
 
   // foca no pin selecionado na lista
   useEffect(() => {
