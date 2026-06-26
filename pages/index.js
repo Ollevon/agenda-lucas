@@ -40,7 +40,8 @@ const STYLE = `
 .head-toggle:hover{color:var(--hi); border-color:#4a4e55}
 .head-toggle svg{width:16px; height:16px}
 .ag-brandrow{display:flex; align-items:center; gap:12px}
-.ag-mark{width:30px; height:30px; border-radius:8px; background:var(--brand); display:flex; align-items:center; justify-content:center; flex-shrink:0; box-shadow:0 0 0 1px rgba(255,122,69,.3), 0 6px 18px -6px rgba(255,122,69,.5)}
+.ag-mark{width:30px; height:30px; border-radius:8px; background:var(--brand); display:flex; align-items:center; justify-content:center; flex-shrink:0; animation:neonMark 4s ease-in-out infinite}
+@keyframes neonMark{0%,100%{box-shadow:0 0 0 1px rgba(230,138,62,.3), 0 0 10px -3px var(--brand)} 50%{box-shadow:0 0 0 1px rgba(230,138,62,.5), 0 0 20px 0px rgba(230,138,62,.7), 0 0 36px 2px rgba(230,138,62,.35)}}
 .ag-mark span{width:11px; height:11px; border-radius:2px; background:var(--void)}
 .ag-title{font-size:19px; font-weight:600; letter-spacing:-.01em}
 .ag-sub{font-size:11px; color:var(--low); letter-spacing:.14em; text-transform:uppercase; margin-top:1px}
@@ -95,6 +96,9 @@ const STYLE = `
 
 /* board */
 .ag-board{flex:1; overflow-y:auto; padding:18px 26px 80px}
+.ag-board.board-map{overflow:hidden; display:flex; padding-bottom:18px}
+.grp,.cal,.week,.mapview{animation:viewFade .35s ease both}
+@keyframes viewFade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
 .grp{margin-bottom:26px}
 .grp-h{display:flex; align-items:center; gap:10px; margin-bottom:11px}
 .grp-h .gt{font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--mid)}
@@ -228,6 +232,34 @@ select.ef-input{cursor:pointer}
 .ef-save:disabled{opacity:.4; cursor:default}
 .act.edit:hover{color:var(--andamento); border-color:rgba(91,143,214,.45)}
 
+/* local no cartão */
+.job-local{display:inline-flex; align-items:center; gap:5px; margin-top:7px; font-size:12px; color:var(--andamento); text-decoration:none; max-width:100%; transition:color .14s}
+.job-local:hover{color:#8fb8e8; text-decoration:underline}
+.job-local svg{width:13px; height:13px; flex-shrink:0}
+
+/* view de mapa */
+.mapview{display:flex; gap:14px; height:100%; min-height:0}
+.map-frame{flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); min-height:340px}
+.map-frame iframe{display:block; width:100%; height:100%; filter:grayscale(.2) contrast(.95)}
+.map-list{width:300px; flex-shrink:0; display:flex; flex-direction:column; gap:7px; overflow-y:auto; padding-right:2px}
+.map-list-h{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--low); padding:2px 2px 6px}
+.map-item{display:flex; gap:0; background:var(--panel); border:1px solid var(--line); border-radius:9px; overflow:hidden; cursor:pointer; text-align:left; transition:border-color .14s; align-items:stretch}
+.map-item:hover{border-color:#4a4e55}
+.map-item.on{border-color:var(--brand)}
+.map-item-bar{width:3px; flex-shrink:0}
+.map-item-body{flex:1; min-width:0; padding:10px 12px}
+.map-item-title{font-size:13.5px; font-weight:500; color:var(--hi); line-height:1.3}
+.map-item-local{display:flex; align-items:center; gap:5px; font-size:11.5px; color:var(--mid); margin-top:4px; line-height:1.3}
+.map-item-local svg{width:12px; height:12px; flex-shrink:0; color:var(--andamento)}
+.map-item-meta{font-size:11px; color:var(--low); margin-top:4px}
+.map-item-go{align-self:center; margin:0 10px; flex-shrink:0; font-size:12px; font-weight:600; color:var(--brand); text-decoration:none; background:rgba(230,138,62,.12); border:1px solid rgba(230,138,62,.35); border-radius:6px; padding:6px 10px; transition:all .14s}
+.map-item-go:hover{background:rgba(230,138,62,.22)}
+@media (max-width:860px){
+  .mapview{flex-direction:column}
+  .map-frame{min-height:240px; height:240px; flex:none}
+  .map-list{width:100%}
+}
+
 /* conflito de trabalho */
 .confl-badge{font-size:10px; font-weight:700; color:var(--danger); background:rgba(255,107,107,.13); border:1px solid rgba(255,107,107,.4); padding:2px 7px; border-radius:99px; letter-spacing:.03em; text-transform:uppercase}
 .multi-tag{font-size:10px; font-weight:600; color:var(--brand); background:rgba(255,122,69,.12); border:1px solid rgba(255,122,69,.35); padding:2px 7px; border-radius:99px; letter-spacing:.02em}
@@ -266,7 +298,8 @@ select.ef-input{cursor:pointer}
 
 /* chat */
 .chat-h{padding:16px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:9px; flex-shrink:0}
-.chat-h .pulse{width:8px; height:8px; border-radius:99px; background:var(--confirmado); box-shadow:0 0 0 0 rgba(61,214,140,.5); animation:beat 2s infinite}
+.chat-h .pulse{width:8px; height:8px; border-radius:99px; background:var(--confirmado); box-shadow:0 0 0 0 rgba(72,194,138,.5); animation:beat 2s infinite, neonGreen 3.5s ease-in-out infinite}
+@keyframes neonGreen{0%,100%{filter:drop-shadow(0 0 2px rgba(72,194,138,.6))} 50%{filter:drop-shadow(0 0 6px rgba(72,194,138,1)) drop-shadow(0 0 12px rgba(72,194,138,.5))}}
 @keyframes beat{0%{box-shadow:0 0 0 0 rgba(61,214,140,.5)} 70%{box-shadow:0 0 0 7px rgba(61,214,140,0)} 100%{box-shadow:0 0 0 0 rgba(61,214,140,0)}}
 .chat-h .ct{font-size:13px; font-weight:600}
 .chat-h .cs{font-size:11px; color:var(--low); margin-left:auto; font-family:'JetBrains Mono',monospace}
@@ -339,7 +372,6 @@ select.ef-input{cursor:pointer}
 .modal{border-radius:8px}
 .ag-mark{border-radius:6px}
 .badge,.tab-n,.multi-tag,.confl-badge{border-radius:4px}
-.ag-mark{box-shadow:none}
 .seg button.on{background:var(--sel); color:#fff}
 .tool.on{background:var(--sel); color:#fff; border-color:var(--sel)}
 .tab.on{background:var(--raised); border-color:var(--sel)}
@@ -357,13 +389,26 @@ select.ef-input{cursor:pointer}
 @media (max-width:860px){ .page{padding:6px 16px} }
 
 /* ===== tela de entrada ===== */
-.splash{position:fixed; inset:0; z-index:200; background:radial-gradient(120% 90% at 50% 0%, #20232a 0%, var(--void) 60%); display:flex; align-items:center; justify-content:center; padding:24px; animation:splashIn .4s ease both; overflow:hidden}
+.splash{position:fixed; inset:0; z-index:200; background:radial-gradient(120% 90% at 50% 0%, #20232a 0%, var(--void) 60%); display:flex; align-items:center; justify-content:center; padding:24px; animation:splashIn .45s ease both; overflow:hidden}
 @keyframes splashIn{from{opacity:0} to{opacity:1}}
-.splash-scan{position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(255,255,255,.015) 0 1px, transparent 1px 3px); pointer-events:none}
+.splash.out{animation:splashOut .6s cubic-bezier(.4,0,.2,1) both}
+@keyframes splashOut{0%{opacity:1; transform:scale(1); filter:blur(0)} 100%{opacity:0; transform:scale(1.04); filter:blur(6px)}}
+.splash.out .splash-inner{animation:splashInnerOut .5s ease both}
+@keyframes splashInnerOut{to{opacity:0; transform:translateY(-10px)}}
+.splash-scan{position:absolute; inset:0; background:repeating-linear-gradient(0deg, rgba(255,255,255,.015) 0 1px, transparent 1px 3px); pointer-events:none; animation:scanDrift 8s linear infinite}
+@keyframes scanDrift{from{background-position:0 0} to{background-position:0 6px}}
 .splash-inner{position:relative; width:100%; max-width:440px; display:flex; flex-direction:column; align-items:flex-start; animation:splashUp .5s cubic-bezier(.2,.8,.2,1) both}
 @keyframes splashUp{from{opacity:0; transform:translateY(14px)} to{opacity:1; transform:translateY(0)}}
+.splash-mark,.splash-greet,.splash-date,.splash-stats,.splash-next,.splash-btn,.splash-alert{animation:fadeRise .55s cubic-bezier(.2,.8,.2,1) both}
+.splash-mark{animation-delay:.05s} .splash-greet{animation-delay:.13s} .splash-date{animation-delay:.2s}
+.splash-stats{animation-delay:.28s} .splash-next{animation-delay:.36s} .splash-btn{animation-delay:.44s} .splash-alert{animation-delay:.52s}
+@keyframes fadeRise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:translateY(0)}}
 .splash-mark{display:flex; align-items:center; gap:10px; margin-bottom:28px}
-.splash-dot{width:26px; height:26px; border-radius:6px; background:var(--brand); box-shadow:0 0 24px -2px var(--brand)}
+.splash-dot{width:26px; height:26px; border-radius:6px; background:var(--brand); animation:neonDot 3.5s ease-in-out infinite}
+@keyframes neonDot{
+  0%,100%{box-shadow:0 0 8px -1px var(--brand), 0 0 18px -3px var(--brand); filter:brightness(1)}
+  50%{box-shadow:0 0 18px 1px var(--brand), 0 0 42px 2px var(--brand), 0 0 70px 6px rgba(230,138,62,.5); filter:brightness(1.25)}
+}
 .splash-wm{font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:700; letter-spacing:.42em; color:var(--mid)}
 .splash-greet{font-size:34px; font-weight:600; letter-spacing:-.02em; line-height:1.1; color:var(--hi)}
 .splash-date{font-size:14px; color:var(--mid); margin-top:6px; text-transform:capitalize}
@@ -371,8 +416,9 @@ select.ef-input{cursor:pointer}
 .splash-stat{display:flex; flex-direction:column; gap:3px; padding:13px 16px; background:var(--panel); border:1px solid var(--line); border-radius:7px; min-width:78px}
 .splash-stat b{font-size:26px; line-height:1; color:var(--hi)}
 .splash-stat span{font-size:10.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--mid)}
-.splash-stat.warn b{color:var(--incerto)}
-.splash-stat.bad b{color:var(--danger)}
+.splash-stat.warn b{color:var(--incerto); animation:neonText 3s ease-in-out infinite}
+.splash-stat.bad b{color:var(--danger); animation:neonText 2.4s ease-in-out infinite}
+@keyframes neonText{0%,100%{text-shadow:0 0 6px rgba(224,179,62,.35)} 50%{text-shadow:0 0 14px rgba(224,179,62,.7), 0 0 26px rgba(224,179,62,.4)}}
 .splash-next{width:100%; background:var(--panel); border:1px solid var(--line); border-radius:9px; padding:15px 16px; margin-bottom:24px}
 .splash-next.empty{opacity:.85}
 .splash-next-lbl{font-size:10px; text-transform:uppercase; letter-spacing:.12em; color:var(--low); margin-bottom:9px}
@@ -382,8 +428,9 @@ select.ef-input{cursor:pointer}
 .splash-next-title{font-size:15px; font-weight:500; color:var(--hi); line-height:1.35}
 .splash-next-when{font-size:12px; color:var(--mid); margin-top:4px}
 .splash-btn{display:inline-flex; align-items:center; gap:10px; padding:14px 26px; background:var(--brand); color:#10120f; border:none; border-radius:7px; font-family:'Inter',sans-serif; font-size:14.5px; font-weight:600; cursor:pointer; transition:transform .15s, box-shadow .15s; box-shadow:0 8px 28px -8px var(--brand)}
-.splash-btn:hover{transform:translateY(-2px); box-shadow:0 12px 34px -8px var(--brand)}
-.splash-btn svg{width:18px; height:18px}
+.splash-btn:hover{transform:translateY(-2px); box-shadow:0 0 20px -2px var(--brand), 0 12px 34px -8px var(--brand)}
+.splash-btn svg{width:18px; height:18px; transition:transform .2s}
+.splash-btn:hover svg{transform:translateX(3px)}
 .splash-alert{margin-top:18px; font-size:12.5px; color:#ffcaca; background:rgba(224,106,106,.12); border:1px solid rgba(224,106,106,.4); border-radius:7px; padding:9px 13px}
 @media (max-width:860px){
   .splash-greet{font-size:27px}
@@ -674,6 +721,7 @@ function AppInner() {
   const [rescheduleId, setRescheduleId] = useState(null);
   const [editJob, setEditJob] = useState(null);
   const [editForm, setEditForm] = useState(null);
+  const [mapSel, setMapSel] = useState(null);
   const [showDone, setShowDone] = useState(false);
   const [onlyIncerto, setOnlyIncerto] = useState(false);
   const [input, setInput] = useState("");
@@ -684,6 +732,7 @@ function AppInner() {
   const resizing = useRef(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [splash, setSplash] = useState(true);
+  const [splashOut, setSplashOut] = useState(false);
   const fileRef = useRef(null);
   const [messages, setMessages] = useState([
     { role: "bot", text: `Manda os seus compromissos do jeito que vierem na cabeça — eu organizo. Ex: "edição do casamento Gabriel Marques até sexta" ou "talvez captação pra Arbo na quarta".` },
@@ -715,6 +764,7 @@ function AppInner() {
                 prioridade: c.prioridade || "media",
                 notas: typeof c.notas === "string" ? c.notas : "",
                 hora: typeof c.hora === "string" ? c.hora : null,
+                local: typeof c.local === "string" ? c.local : "",
                 categoria: CATEGORIA[inferCategoria(c)] ? inferCategoria(c) : "trabalho",
                 datas,
                 data: datas[0] || null,
@@ -819,6 +869,7 @@ function AppInner() {
             categoria: CATEGORIA[c.categoria] ? c.categoria : null,
             tipo: TIPO[c.tipo] ? c.tipo : "outro",
             datas, data: datas[0] || null, hora: c.hora || null,
+            local: c.local || "",
             status: STATUS[c.status] ? c.status : "confirmado",
             prioridade: c.prioridade || "media", notas: c.notas || "",
           };
@@ -840,6 +891,7 @@ function AppInner() {
               ...(c.categoria && CATEGORIA[c.categoria] ? { categoria: c.categoria } : {}),
               ...(nd !== null ? { datas: nd, data: nd[0] || null } : {}),
               ...(c.hora ? { hora: c.hora } : {}),
+              ...(c.local ? { local: c.local } : {}),
               ...(c.status && STATUS[c.status] ? { status: c.status } : {}),
               ...(c.prioridade ? { prioridade: c.prioridade } : {}),
               ...(c.notas ? { notas: c.notas } : {}),
@@ -885,6 +937,7 @@ function AppInner() {
       status: c.status || "confirmado",
       prioridade: c.prioridade || "media",
       hora: c.hora || "",
+      local: c.local || "",
       notas: c.notas || "",
       datas: datesOf(c).slice(),
     });
@@ -901,6 +954,7 @@ function AppInner() {
       status: STATUS[editForm.status] ? editForm.status : "confirmado",
       prioridade: editForm.prioridade || "media",
       hora: editForm.hora.trim() || null,
+      local: editForm.local.trim(),
       notas: editForm.notas.trim(),
       datas,
       data: datas[0] || null,
@@ -1104,6 +1158,13 @@ function AppInner() {
           </div>
           <div className="job-title">{c.titulo}</div>
 
+          {c.local && (
+            <a className="job-local" href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.local)}`} target="_blank" rel="noopener noreferrer" title="Abrir no Google Maps">
+              <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="2" /></svg>
+              {c.local}
+            </a>
+          )}
+
           {/* datas empilhadas (lista, multi) */}
           {!ctxDay && multi ? (
             <div className="dates">
@@ -1167,7 +1228,7 @@ function AppInner() {
       <style>{STYLE}</style>
 
       {splash && (
-        <div className="splash">
+        <div className={"splash" + (splashOut ? " out" : "")}>
           <div className="splash-scan" />
           <div className="splash-inner">
             <div className="splash-mark">
@@ -1205,7 +1266,7 @@ function AppInner() {
               </div>
             )}
 
-            <button className="splash-btn" onClick={() => setSplash(false)}>
+            <button className="splash-btn" onClick={() => { setSplashOut(true); setTimeout(() => setSplash(false), 620); }}>
               Entrar na sala de corte
               <svg viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
             </button>
@@ -1307,7 +1368,7 @@ function AppInner() {
           </div>
         </div>
 
-        <div className="ag-board scroll">
+        <div className={"ag-board scroll" + (view === "mapa" ? " board-map" : "")}>
           {view === "lista" && (
             visible.length === 0 ? (
               <div className="empty">
@@ -1405,6 +1466,54 @@ function AppInner() {
               )}
             </>
           )}
+
+          {view === "mapa" && (() => {
+            const withLoc = visible.filter(c => c.local && c.local.trim());
+            const sel = withLoc.find(c => c.id === mapSel) || withLoc[0] || null;
+            return (
+              <div className="mapview">
+                {withLoc.length === 0 ? (
+                  <div className="empty">
+                    <div className="big">📍</div>
+                    <h3>Nenhum job com local</h3>
+                    <p>Adicione um local nos compromissos (pelo botão Editar ou escrevendo no console) pra vê-los aqui no mapa.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="map-frame">
+                      <iframe
+                        key={sel ? sel.id : "none"}
+                        title="Mapa do job"
+                        width="100%" height="100%" style={{ border: 0 }}
+                        loading="lazy" referrerPolicy="no-referrer-when-downgrade"
+                        src={`https://maps.google.com/maps?q=${encodeURIComponent(sel.local)}&output=embed`}
+                      />
+                    </div>
+                    <div className="map-list scroll">
+                      <div className="map-list-h">{withLoc.length} {withLoc.length === 1 ? "job com local" : "jobs com local"}</div>
+                      {withLoc.map(c => {
+                        const kc = CATEGORIA[catOf(c)].color;
+                        return (
+                          <button key={c.id} className={"map-item" + (sel && sel.id === c.id ? " on" : "")} onClick={() => setMapSel(c.id)}>
+                            <span className="map-item-bar" style={{ background: kc }} />
+                            <div className="map-item-body">
+                              <div className="map-item-title">{c.titulo}</div>
+                              <div className="map-item-local">
+                                <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="2" /></svg>
+                                {c.local}
+                              </div>
+                              <div className="map-item-meta mono">{fmtWhen(repISO(c), c.hora)}{c.cliente ? ` · ${c.cliente}` : ""}</div>
+                            </div>
+                            <a className="map-item-go" href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.local)}`} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} title="Traçar rota">Rota</a>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         <div className="pagebar">
@@ -1419,6 +1528,10 @@ function AppInner() {
           <button className={"page" + (view === "semana" ? " on" : "")} onClick={() => setView("semana")}>
             <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M9 4v17M15 4v17M3 9h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
             <span>Semana</span>
+          </button>
+          <button className={"page" + (view === "mapa" ? " on" : "")} onClick={() => setView("mapa")}>
+            <svg viewBox="0 0 24 24" fill="none"><path d="M9 3 3 5v16l6-2 6 2 6-2V3l-6 2-6-2zM9 3v16M15 5v16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            <span>Mapa</span>
           </button>
         </div>
       </div>
@@ -1557,6 +1670,9 @@ function AppInner() {
 
               <label className="ef-label">Horário (opcional)</label>
               <input className="ef-input" type="time" value={editForm.hora} onChange={(e) => setEditForm(f => ({ ...f, hora: e.target.value }))} />
+
+              <label className="ef-label">Local (opcional)</label>
+              <input className="ef-input" value={editForm.local} onChange={(e) => setEditForm(f => ({ ...f, local: e.target.value }))} placeholder="Ex: Sítio em Araruama, ou Av. Atlântica 100, Saquarema" />
 
               <label className="ef-label">Datas</label>
               <div className="ef-dates">
