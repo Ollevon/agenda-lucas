@@ -203,6 +203,31 @@ const STYLE = `
 .modal-body{padding:14px 16px; overflow-y:auto; min-height:0; flex:1; -webkit-overflow-scrolling:touch}
 .modal-empty{color:var(--low); text-align:center; padding:30px 0; font-size:13px}
 
+/* formulário de edição */
+.edit-modal{max-width:560px}
+.ef-label{display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--mid); margin:14px 0 6px}
+.ef-label:first-child{margin-top:0}
+.ef-input{width:100%; background:var(--void); border:1px solid var(--line); border-radius:7px; color:var(--hi); font-family:'Inter',sans-serif; font-size:13.5px; padding:9px 11px; transition:border-color .14s; color-scheme:dark}
+.ef-input:focus{outline:none; border-color:var(--brand)}
+select.ef-input{cursor:pointer}
+.ef-textarea{resize:vertical; min-height:60px; line-height:1.5}
+.ef-row{display:flex; gap:12px}
+.ef-col{flex:1; min-width:0}
+.ef-dates{display:flex; flex-direction:column; gap:7px}
+.ef-daterow{display:flex; gap:7px; align-items:center}
+.ef-daterow .ef-input{flex:1}
+.ef-deldate{width:34px; height:34px; flex-shrink:0; border-radius:7px; background:var(--raised); border:1px solid var(--line); color:var(--mid); cursor:pointer; font-size:12px; transition:all .14s}
+.ef-deldate:hover{color:var(--danger); border-color:rgba(224,106,106,.4)}
+.ef-adddate{align-self:flex-start; font-size:12.5px; font-weight:500; color:var(--brand); background:transparent; border:1px dashed rgba(230,138,62,.5); border-radius:7px; padding:8px 13px; cursor:pointer; transition:all .14s}
+.ef-adddate:hover{background:rgba(230,138,62,.1); border-style:solid}
+.ef-nodate{font-size:12.5px; color:var(--low); padding:2px 0}
+.ef-foot{display:flex; gap:10px; justify-content:flex-end; padding:14px 16px; border-top:1px solid var(--line); flex-shrink:0}
+.ef-cancel{font-size:13px; font-weight:500; color:var(--mid); background:transparent; border:1px solid var(--line); border-radius:7px; padding:9px 16px; cursor:pointer; transition:all .14s}
+.ef-cancel:hover{color:var(--hi); border-color:#4a4e55}
+.ef-save{font-size:13px; font-weight:600; color:#10120f; background:var(--brand); border:none; border-radius:7px; padding:9px 18px; cursor:pointer; transition:opacity .14s}
+.ef-save:disabled{opacity:.4; cursor:default}
+.act.edit:hover{color:var(--andamento); border-color:rgba(91,143,214,.45)}
+
 /* conflito de trabalho */
 .confl-badge{font-size:10px; font-weight:700; color:var(--danger); background:rgba(255,107,107,.13); border:1px solid rgba(255,107,107,.4); padding:2px 7px; border-radius:99px; letter-spacing:.03em; text-transform:uppercase}
 .multi-tag{font-size:10px; font-weight:600; color:var(--brand); background:rgba(255,122,69,.12); border:1px solid rgba(255,122,69,.35); padding:2px 7px; border-radius:99px; letter-spacing:.02em}
@@ -532,10 +557,35 @@ function monthGridISO(iso) {
   }
   return weeks;
 }
-const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+// normaliza datas vindas da IA — conserta formatos comuns em vez de descartar
+function coerceDate(d) {
+  if (d == null) return null;
+  let s = String(d).trim();
+  if (!s) return null;
+  // pega só a parte da data se vier com horário (2026-07-02T10:00 ou "2026-07-02 10:00")
+  s = s.split(/[T ]/)[0];
+  // troca barras/pontos por hífen (2026/07/02 ou 2026.07.02)
+  s = s.replace(/[/.]/g, "-");
+  const m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) {
+    const y = m[1], mo = m[2].padStart(2, "0"), da = m[3].padStart(2, "0");
+    const iso = `${y}-${mo}-${da}`;
+    // valida que é uma data real
+    const dt = new Date(`${iso}T00:00:00`);
+    if (!isNaN(dt.getTime()) && +mo >= 1 && +mo <= 12 && +da >= 1 && +da <= 31) return iso;
+  }
+  // formato dd-mm-yyyy (caso a IA inverta)
+  const m2 = s.match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+  if (m2) {
+    const da = m2[1].padStart(2, "0"), mo = m2[2].padStart(2, "0"), y = m2[3];
+    if (+mo >= 1 && +mo <= 12 && +da >= 1 && +da <= 31) return `${y}-${mo}-${da}`;
+  }
+  return null;
+}
 function normDates(arr) {
   if (!Array.isArray(arr)) return [];
-  return [...new Set(arr.filter(d => typeof d === "string" && ISO_RE.test(d)))].sort();
+  const out = arr.map(coerceDate).filter(Boolean);
+  return [...new Set(out)].sort();
 }
 // data representativa: próxima futura, senão a mais recente
 function repISO(c) {
@@ -622,6 +672,8 @@ function AppInner() {
   const [cursor, setCursor] = useState(todayISO());    // âncora do calendário
   const [selDay, setSelDay] = useState(null);          // dia aberto no modal
   const [rescheduleId, setRescheduleId] = useState(null);
+  const [editJob, setEditJob] = useState(null);
+  const [editForm, setEditForm] = useState(null);
   const [showDone, setShowDone] = useState(false);
   const [onlyIncerto, setOnlyIncerto] = useState(false);
   const [input, setInput] = useState("");
@@ -821,6 +873,43 @@ function AppInner() {
   const setStatus = (id, status) => setItems(p => p.map(x => x.id === id ? { ...x, status } : x));
   const setCategoria = (id, categoria) => setItems(p => p.map(x => x.id === id ? { ...x, categoria } : x));
   const remove = (id) => setItems(p => p.filter(x => x.id !== id));
+
+  // edição completa do cartão
+  const openEdit = (c) => {
+    setEditJob(c.id);
+    setEditForm({
+      titulo: c.titulo || "",
+      cliente: c.cliente || "",
+      categoria: catOf(c),
+      tipo: c.tipo || "outro",
+      status: c.status || "confirmado",
+      prioridade: c.prioridade || "media",
+      hora: c.hora || "",
+      notas: c.notas || "",
+      datas: datesOf(c).slice(),
+    });
+  };
+  const saveEdit = () => {
+    if (!editForm || !editForm.titulo.trim()) return;
+    const datas = normDates(editForm.datas);
+    setItems(p => p.map(x => x.id === editJob ? {
+      ...x,
+      titulo: editForm.titulo.trim(),
+      cliente: editForm.cliente.trim(),
+      categoria: CATEGORIA[editForm.categoria] ? editForm.categoria : "trabalho",
+      tipo: TIPO[editForm.tipo] ? editForm.tipo : "outro",
+      status: STATUS[editForm.status] ? editForm.status : "confirmado",
+      prioridade: editForm.prioridade || "media",
+      hora: editForm.hora.trim() || null,
+      notas: editForm.notas.trim(),
+      datas,
+      data: datas[0] || null,
+    } : x));
+    setEditJob(null); setEditForm(null);
+  };
+  const editAddDate = () => setEditForm(f => ({ ...f, datas: [...f.datas, ""] }));
+  const editSetDate = (i, v) => setEditForm(f => ({ ...f, datas: f.datas.map((d, j) => j === i ? v : d) }));
+  const editDelDate = (i) => setEditForm(f => ({ ...f, datas: f.datas.filter((_, j) => j !== i) }));
 
   // backup + calendário
   function exportBackup() {
@@ -1044,6 +1133,7 @@ function AppInner() {
                   Google
                 </a>
               )}
+              <button className="act edit" onClick={() => openEdit(c)}>Editar</button>
               <button className="act del" onClick={() => remove(c.id)}>Excluir</button>
             </div>
           </div>
@@ -1409,6 +1499,83 @@ function AppInner() {
               {(eventsByDay[selDay] || []).length
                 ? (eventsByDay[selDay]).map(c => renderJob(c, selDay))
                 : <div className="modal-empty">Nenhum compromisso neste dia.</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {editForm && (
+        <div className="modal-bk" onClick={() => { setEditJob(null); setEditForm(null); }}>
+          <div className="modal edit-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-h">
+              <div className="modal-ht">
+                <div className="modal-d disp">Editar compromisso</div>
+                <div className="modal-s">Altere qualquer informação</div>
+              </div>
+              <button className="modal-x" onClick={() => { setEditJob(null); setEditForm(null); }} aria-label="Fechar">✕</button>
+            </div>
+            <div className="modal-body scroll">
+              <label className="ef-label">Título</label>
+              <input className="ef-input" value={editForm.titulo} onChange={(e) => setEditForm(f => ({ ...f, titulo: e.target.value }))} placeholder="Ex: Edição casamento Gabriel" />
+
+              <label className="ef-label">Cliente</label>
+              <input className="ef-input" value={editForm.cliente} onChange={(e) => setEditForm(f => ({ ...f, cliente: e.target.value }))} placeholder="Opcional" />
+
+              <div className="ef-row">
+                <div className="ef-col">
+                  <label className="ef-label">Categoria</label>
+                  <select className="ef-input" value={editForm.categoria} onChange={(e) => setEditForm(f => ({ ...f, categoria: e.target.value }))}>
+                    <option value="trabalho">Trabalho</option>
+                    <option value="reuniao">Reunião</option>
+                    <option value="pessoal">Pessoal</option>
+                  </select>
+                </div>
+                <div className="ef-col">
+                  <label className="ef-label">Tipo</label>
+                  <select className="ef-input" value={editForm.tipo} onChange={(e) => setEditForm(f => ({ ...f, tipo: e.target.value }))}>
+                    {Object.entries(TIPO).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                  </select>
+                </div>
+              </div>
+
+              <div className="ef-row">
+                <div className="ef-col">
+                  <label className="ef-label">Status</label>
+                  <select className="ef-input" value={editForm.status} onChange={(e) => setEditForm(f => ({ ...f, status: e.target.value }))}>
+                    {Object.entries(STATUS).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+                  </select>
+                </div>
+                <div className="ef-col">
+                  <label className="ef-label">Prioridade</label>
+                  <select className="ef-input" value={editForm.prioridade} onChange={(e) => setEditForm(f => ({ ...f, prioridade: e.target.value }))}>
+                    <option value="baixa">Baixa</option>
+                    <option value="media">Média</option>
+                    <option value="alta">Alta</option>
+                  </select>
+                </div>
+              </div>
+
+              <label className="ef-label">Horário (opcional)</label>
+              <input className="ef-input" type="time" value={editForm.hora} onChange={(e) => setEditForm(f => ({ ...f, hora: e.target.value }))} />
+
+              <label className="ef-label">Datas</label>
+              <div className="ef-dates">
+                {editForm.datas.length === 0 && <div className="ef-nodate">Sem data definida</div>}
+                {editForm.datas.map((d, i) => (
+                  <div key={i} className="ef-daterow">
+                    <input className="ef-input" type="date" value={d} onChange={(e) => editSetDate(i, e.target.value)} />
+                    <button className="ef-deldate" onClick={() => editDelDate(i)} title="Remover data">✕</button>
+                  </div>
+                ))}
+                <button className="ef-adddate" onClick={editAddDate}>+ Adicionar data</button>
+              </div>
+
+              <label className="ef-label">Notas (opcional)</label>
+              <textarea className="ef-input ef-textarea" value={editForm.notas} onChange={(e) => setEditForm(f => ({ ...f, notas: e.target.value }))} placeholder="Detalhes, observações…" rows={3} />
+            </div>
+            <div className="ef-foot">
+              <button className="ef-cancel" onClick={() => { setEditJob(null); setEditForm(null); }}>Cancelar</button>
+              <button className="ef-save" onClick={saveEdit} disabled={!editForm.titulo.trim()}>Salvar alterações</button>
             </div>
           </div>
         </div>
