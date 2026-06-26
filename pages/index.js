@@ -55,6 +55,24 @@ const STYLE = `
 .head-pause:hover{background:rgba(230,138,62,.22); border-color:var(--brand)}
 .head-pause svg{width:16px; height:16px}
 @keyframes pauseGlow{0%,100%{box-shadow:0 0 0 0 rgba(230,138,62,0)} 50%{box-shadow:0 0 12px -2px rgba(230,138,62,.5)}}
+
+/* grupos de ações no header com separador e tooltips */
+.head-actions{display:flex; align-items:center; gap:8px}
+.head-group{display:flex; align-items:center; gap:5px}
+.head-sep{width:1px; height:22px; background:var(--line); flex-shrink:0}
+.htip{position:relative}
+.htip::after{content:attr(data-tip); position:absolute; top:calc(100% + 7px); left:50%; transform:translateX(-50%) translateY(-3px); background:var(--void); color:var(--hi); font-family:'Inter',sans-serif; font-size:11px; font-weight:500; white-space:nowrap; padding:5px 9px; border-radius:6px; border:1px solid var(--line); box-shadow:0 6px 18px -6px rgba(0,0,0,.6); opacity:0; pointer-events:none; transition:opacity .15s, transform .15s; z-index:50}
+.htip::before{content:""; position:absolute; top:calc(100% + 2px); left:50%; transform:translateX(-50%); border:5px solid transparent; border-bottom-color:var(--line); opacity:0; transition:opacity .15s; z-index:50}
+.htip:hover::after{opacity:1; transform:translateX(-50%) translateY(0)}
+.htip:hover::before{opacity:1}
+/* último botão (dados): tooltip alinhada à direita pra não vazar */
+.hmenu .htip::after{left:auto; right:0; transform:translateX(0) translateY(-3px)}
+.hmenu .htip:hover::after{transform:translateX(0) translateY(0)}
+.hmenu .htip::before{left:auto; right:9px; transform:none}
+@media (max-width:860px){
+  .htip::after,.htip::before{display:none}
+  .head-sep{height:18px}
+}
 .head-toggle:hover{color:var(--hi); border-color:#4a4e55}
 .head-toggle svg{width:16px; height:16px}
 .ag-brandrow{display:flex; align-items:center; gap:12px}
@@ -480,6 +498,12 @@ select.ef-input{cursor:pointer}
 .page:hover{color:var(--hi); background:var(--raised)}
 .page.on{color:var(--hi); background:var(--raised)}
 .page.on::before{content:""; position:absolute; top:-7px; left:10px; right:10px; height:2px; background:var(--brand); border-radius:2px}
+
+/* rodapé compacto estilo Resolve — faixa fina, ícone ao lado do texto */
+.pagebar.compact-bar{padding:3px 6px; gap:2px}
+.pagebar.compact-bar .page{flex-direction:row; gap:6px; padding:5px 14px; font-size:9.5px}
+.pagebar.compact-bar .page svg{width:14px; height:14px}
+.pagebar.compact-bar .page.on::before{top:-3px; left:8px; right:8px; height:2px}
 @media (max-width:860px){ .page{padding:6px 16px} }
 
 /* ===== tela de entrada ===== */
@@ -1002,6 +1026,7 @@ function AppInner() {
     showSub: true,          // subtítulo "sala de corte · Lucas"
     density: "comfort",     // comfort | compact
     defaultView: "mes",     // lista | mes | semana | mapa — visualização ao abrir
+    compactBar: false,      // rodapé fino estilo Resolve
   });
   const [menuOpen, setMenuOpen] = useState(false);
   const [splash, setSplash] = useState(true);
@@ -1655,49 +1680,58 @@ function AppInner() {
               <div className="d1">{WD[today.getDay()]}, {today.getDate()} {MO[today.getMonth()]}</div>
               <div className="d2 mono">{todayISO()}</div>
             </div>
-            <button className="head-pause" onClick={openPause} title="Pausa criativa" aria-label="Pausa criativa">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M17.7 6.3l1.4-1.4M4.9 19.1l1.4-1.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="2" /></svg>
-            </button>
-            <button className="head-toggle" onClick={() => { setSplashOut(false); setSplash(true); }} title="Bloquear (voltar à tela inicial)" aria-label="Bloquear tela">
-              <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-            </button>
-            <button className="head-toggle" onClick={() => setHeadColl(v => !v)} title={headColl ? "Mostrar resumo" : "Recolher topo"} aria-label={headColl ? "Mostrar resumo" : "Recolher topo"}>
-              <svg viewBox="0 0 24 24" fill="none">
-                {headColl
-                  ? <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                  : <path d="M6 15l6-6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />}
-              </svg>
-            </button>
-            <button className="head-toggle" onClick={() => setLayoutOpen(true)} title="Personalizar layout" aria-label="Personalizar layout">
-              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /></svg>
-            </button>
-            <div className="hmenu">
-              <button className="hbtn" onClick={() => setMenuOpen(v => !v)} aria-label="Dados e backup">
-                <svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" strokeWidth="2" /><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-              </button>
-              {menuOpen && (
-                <>
-                  <div className="dbackdrop" onClick={() => setMenuOpen(false)} />
-                  <div className="dropdown">
-                    <button className="ditem" onClick={exportBackup}>
-                      <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M7 10l5 5 5-5M5 21h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      Exportar backup (.json)
-                    </button>
-                    <button className="ditem" onClick={() => fileRef.current && fileRef.current.click()}>
-                      <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V3M7 8l5-5 5 5M5 21h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                      Importar backup
-                    </button>
-                    <div className="ddiv" />
-                    <button className="ditem" onClick={exportICS}>
-                      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-                      Enviar pra Google Agenda (.ics)
-                    </button>
-                    <div className="dcap">O .ics importa todos os compromissos com data de uma vez. Cada cartão também tem um “+ Google” pra adicionar um por um.</div>
-                  </div>
-                </>
-              )}
-              <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: "none" }}
-                onChange={(e) => { const f = e.target.files[0]; if (f) importBackup(f); e.target.value = ""; }} />
+            <div className="head-actions">
+              <div className="head-group">
+                <button className="head-pause htip" data-tip="Pausa criativa" onClick={openPause} aria-label="Pausa criativa">
+                  <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v2M12 19v2M5 12H3M21 12h-2M6.3 6.3 4.9 4.9M19.1 19.1l-1.4-1.4M17.7 6.3l1.4-1.4M4.9 19.1l1.4-1.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /><circle cx="12" cy="12" r="3.5" stroke="currentColor" strokeWidth="2" /></svg>
+                </button>
+                <button className="head-toggle htip" data-tip="Bloquear" onClick={() => { setSplashOut(false); setSplash(true); }} aria-label="Bloquear tela">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="5" y="11" width="14" height="9" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                </button>
+              </div>
+
+              <span className="head-sep" />
+
+              <div className="head-group">
+                <button className="head-toggle htip" data-tip={headColl ? "Mostrar resumo" : "Recolher topo"} onClick={() => setHeadColl(v => !v)} aria-label={headColl ? "Mostrar resumo" : "Recolher topo"}>
+                  <svg viewBox="0 0 24 24" fill="none">
+                    {headColl
+                      ? <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                      : <path d="M6 15l6-6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />}
+                  </svg>
+                </button>
+                <button className="head-toggle htip" data-tip="Layout" onClick={() => setLayoutOpen(true)} aria-label="Personalizar layout">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /></svg>
+                </button>
+                <div className="hmenu">
+                  <button className="hbtn htip" data-tip="Dados e backup" onClick={() => setMenuOpen(v => !v)} aria-label="Dados e backup">
+                    <svg viewBox="0 0 24 24" fill="none"><ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" strokeWidth="2" /><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                  </button>
+                  {menuOpen && (
+                    <>
+                      <div className="dbackdrop" onClick={() => setMenuOpen(false)} />
+                      <div className="dropdown">
+                        <button className="ditem" onClick={exportBackup}>
+                          <svg viewBox="0 0 24 24" fill="none"><path d="M12 3v12M7 10l5 5 5-5M5 21h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          Exportar backup (.json)
+                        </button>
+                        <button className="ditem" onClick={() => fileRef.current && fileRef.current.click()}>
+                          <svg viewBox="0 0 24 24" fill="none"><path d="M12 15V3M7 8l5-5 5 5M5 21h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+                          Importar backup
+                        </button>
+                        <div className="ddiv" />
+                        <button className="ditem" onClick={exportICS}>
+                          <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2" stroke="currentColor" strokeWidth="2" /><path d="M3 9h18M8 2v4M16 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
+                          Enviar pra Google Agenda (.ics)
+                        </button>
+                        <div className="dcap">O .ics importa todos os compromissos com data de uma vez. Cada cartão também tem um “+ Google” pra adicionar um por um.</div>
+                      </div>
+                    </>
+                  )}
+                  <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: "none" }}
+                    onChange={(e) => { const f = e.target.files[0]; if (f) importBackup(f); e.target.value = ""; }} />
+                </div>
+              </div>
             </div>
           </div>
           {!headColl && prefs.showStats && (
@@ -1897,7 +1931,7 @@ function AppInner() {
           })()}
         </div>
 
-        <div className="pagebar">
+        <div className={"pagebar" + (prefs.compactBar ? " compact-bar" : "")}>
           <button className={"page" + (view === "lista" ? " on" : "")} onClick={() => setView("lista")}>
             <svg viewBox="0 0 24 24" fill="none"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
             <span>Lista</span>
@@ -2100,7 +2134,15 @@ function AppInner() {
                 <div className={"lo-switch" + (prefs.showSub ? " on" : "")}><span /></div>
               </div>
 
-              <button className="lo-reset" onClick={() => setPrefs({ consoleSide: "right", showStats: true, pagesPos: "bottom", showSub: true, density: "comfort", defaultView: "mes" })}>
+              <div className="lo-toggle" onClick={() => setPref("compactBar", !prefs.compactBar)}>
+                <div>
+                  <div className="lo-tl">Rodapé compacto</div>
+                  <div className="lo-td">Barra fina estilo Resolve, ícones menores</div>
+                </div>
+                <div className={"lo-switch" + (prefs.compactBar ? " on" : "")}><span /></div>
+              </div>
+
+              <button className="lo-reset" onClick={() => setPrefs({ consoleSide: "right", showStats: true, pagesPos: "bottom", showSub: true, density: "comfort", defaultView: "mes", compactBar: false })}>
                 Restaurar padrão
               </button>
             </div>
