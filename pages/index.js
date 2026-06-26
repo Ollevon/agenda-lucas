@@ -112,6 +112,9 @@ const STYLE = `
 .ag-board{flex:1; overflow-y:auto; padding:18px 26px 80px}
 .ag-board.board-map{overflow:hidden; display:flex; flex-direction:column; padding-bottom:18px}
 .ag-board.board-map > .mapview{flex:1; min-height:0}
+.ag-board.board-month{overflow:hidden; display:flex; flex-direction:column; padding-bottom:18px}
+.ag-board.board-month > .calnav{flex-shrink:0}
+.ag-board.board-month > .cal{flex:1; min-height:0}
 .grp,.cal,.week,.mapview{animation:viewFade .35s ease both}
 @keyframes viewFade{from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}}
 .grp{margin-bottom:26px}
@@ -169,25 +172,26 @@ const STYLE = `
 .cal-undated{font-size:12px; font-weight:500; color:var(--incerto); background:rgba(242,193,78,.1); border:1px solid rgba(242,193,78,.35); border-radius:8px; padding:6px 11px; cursor:pointer}
 .cal-undated:hover{background:rgba(242,193,78,.18)}
 
-/* grade do mês */
-.cal-wd{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px}
+/* grade do mês — preenche a altura, células iguais, mês inteiro sem rolar */
+.cal{display:flex; flex-direction:column; height:100%; min-height:0}
+.cal-wd{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:6px; flex-shrink:0}
 .cal-wd span{font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--low); text-align:left; padding-left:4px}
-.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px}
-.cal-cell{min-height:96px; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; display:flex; flex-direction:column; gap:4px; cursor:default; transition:border-color .14s}
+.cal-grid{display:grid; grid-template-columns:repeat(7,1fr); gap:6px; flex:1; min-height:0; grid-auto-rows:1fr}
+.cal-cell{min-height:0; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:6px; display:flex; flex-direction:column; gap:4px; cursor:default; transition:border-color .14s; overflow:hidden}
 .cal-cell:hover{border-color:#333843}
 .cal-cell.dim{opacity:.4}
 .cal-cell.today{border-color:var(--brand); box-shadow:inset 0 0 0 1px rgba(255,122,69,.4)}
-.cal-dn{font-size:12.5px; font-weight:600; color:var(--mid); font-family:'JetBrains Mono',monospace; padding-left:2px}
+.cal-dn{font-size:12.5px; font-weight:600; color:var(--mid); font-family:'JetBrains Mono',monospace; padding-left:2px; flex-shrink:0}
 .cal-cell.today .cal-dn{color:var(--brand)}
-.cal-evs{display:flex; flex-direction:column; gap:3px; overflow:hidden}
-.cal-ev{display:flex; align-items:center; gap:5px; width:100%; text-align:left; background:color-mix(in srgb, var(--ec) 14%, transparent); border:none; border-left:2.5px solid var(--ec); border-radius:4px; padding:3px 5px; cursor:pointer; overflow:hidden; transition:background .12s}
+.cal-evs{display:flex; flex-direction:column; gap:3px; overflow:hidden; min-height:0}
+.cal-ev{display:flex; align-items:center; gap:5px; width:100%; text-align:left; background:color-mix(in srgb, var(--ec) 14%, transparent); border:none; border-left:2.5px solid var(--ec); border-radius:4px; padding:3px 5px; cursor:pointer; overflow:hidden; transition:background .12s; flex-shrink:0}
 .cal-ev:hover{background:color-mix(in srgb, var(--ec) 26%, transparent)}
 .cal-ev.inc{border-left-style:dashed; opacity:.85}
 .cal-ev.done{opacity:.5}
 .cal-ev.done .ev-x{text-decoration:line-through}
 .ev-t{font-size:9.5px; color:var(--ec); flex-shrink:0; font-weight:600}
 .ev-x{font-size:11px; color:var(--hi); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-.cal-more{font-size:10.5px; color:var(--low); background:transparent; border:none; cursor:pointer; text-align:left; padding:1px 5px}
+.cal-more{font-size:10.5px; color:var(--low); background:transparent; border:none; cursor:pointer; text-align:left; padding:1px 5px; flex-shrink:0}
 .cal-more:hover{color:var(--hi)}
 
 /* semana */
@@ -255,6 +259,7 @@ select.ef-input{cursor:pointer}
 .lo-seg button{flex:1; padding:8px 10px; border:none; background:transparent; color:var(--mid); font-family:'Inter',sans-serif; font-size:13px; font-weight:500; border-radius:5px; cursor:pointer; transition:all .14s}
 .lo-seg button:hover{color:var(--hi)}
 .lo-seg button.on{background:var(--brand); color:#10120f; font-weight:600}
+.lo-seg-4 button{padding:8px 4px; font-size:12px}
 .lo-toggle{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 0; border-top:1px solid var(--line); cursor:pointer}
 .lo-tl{font-size:13.5px; font-weight:500; color:var(--hi)}
 .lo-td{font-size:11.5px; color:var(--low); margin-top:2px}
@@ -390,18 +395,23 @@ select.ef-input{cursor:pointer}
 @media (max-width:860px){
   .ag-root{flex-direction:column}
   .ag-chat{width:100%!important; height:44vh; border-left:none; border-top:1px solid var(--line)}
-  .ag-chat.collapsed{height:auto}
+  .ag-chat.collapsed{display:none}
   .chat-grip{display:none}
-  .launcher{display:none}
+  .launcher{bottom:18px; right:18px; padding:13px 18px}
   .ag-stats{gap:6px} .stat{padding:7px 10px}
   .ag-head{padding:16px 18px 12px}
   .ag-board{padding:16px 18px 28px}
   .ag-tabs{padding:10px 18px}
-  .cal-cell{min-height:62px; padding:4px}
+  .cal-cell{min-height:54px; padding:4px}
   .cal-dn{font-size:11px}
   .ev-x{font-size:10px}
   .cal-ev{gap:3px; padding:2px 4px}
   .cal-label{font-size:16px}
+  /* no celular, deixa o mês rolar se não couber — espremer demais prejudica leitura */
+  .ag-board.board-month{overflow-y:auto}
+  .ag-board.board-month > .cal{flex:none; min-height:0}
+  .cal{height:auto}
+  .cal-grid{grid-auto-rows:minmax(54px,auto)}
   .week{display:flex; overflow-x:auto; gap:8px}
   .week-col{min-width:140px; flex-shrink:0}
 }
@@ -871,7 +881,7 @@ function AppInner() {
   const [onlyIncerto, setOnlyIncerto] = useState(false);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(true);
   const [headColl, setHeadColl] = useState(false);
   const [chatW, setChatW] = useState(340);
   const resizing = useRef(false);
@@ -882,6 +892,7 @@ function AppInner() {
     pagesPos: "bottom",     // bottom | top
     showSub: true,          // subtítulo "sala de corte · Lucas"
     density: "comfort",     // comfort | compact
+    defaultView: "mes",     // lista | mes | semana | mapa — visualização ao abrir
   });
   const [menuOpen, setMenuOpen] = useState(false);
   const [splash, setSplash] = useState(true);
@@ -958,7 +969,10 @@ function AppInner() {
     if (saved >= 280 && saved <= 720) setChatW(saved);
     try {
       const p = JSON.parse(localStorage.getItem("agendaPrefs") || "null");
-      if (p && typeof p === "object") setPrefs(prev => ({ ...prev, ...p }));
+      if (p && typeof p === "object") {
+        setPrefs(prev => ({ ...prev, ...p }));
+        if (p.defaultView && ["lista", "mes", "semana", "mapa"].includes(p.defaultView)) setView(p.defaultView);
+      }
     } catch (e) {}
 
     const onMove = (e) => {
@@ -1096,6 +1110,10 @@ function AppInner() {
       const out = await askAI(text, items);
       if (out.operations && out.operations.length) applyOps(out.operations);
       setMessages(m => [...m, { role: "bot", text: out.reply || "Pronto, atualizei a agenda." }]);
+      // no mobile, recolhe o console após registrar pra mostrar o resultado na agenda
+      if (typeof window !== "undefined" && window.innerWidth <= 860 && out.operations && out.operations.length) {
+        setTimeout(() => setCollapsed(true), 1200);
+      }
     } catch (e) {
       setMessages(m => [...m, { role: "bot", err: true, text: `Não consegui processar: ${e.message || "erro desconhecido"}. Toquei o texto de volta no campo — é só tentar de novo.` }]);
       setInput(text);
@@ -1559,7 +1577,7 @@ function AppInner() {
           </div>
         </div>
 
-        <div className={"ag-board scroll" + (view === "mapa" ? " board-map" : "")}>
+        <div className={"ag-board scroll" + (view === "mapa" ? " board-map" : "") + (view === "mes" ? " board-month" : "")}>
           {view === "lista" && (
             visible.length === 0 ? (
               <div className="empty">
@@ -1821,6 +1839,16 @@ function AppInner() {
             </div>
             <div className="modal-body scroll">
               <div className="lo-group">
+                <div className="lo-label">Visualização ao abrir o app</div>
+                <div className="lo-seg lo-seg-4">
+                  <button className={prefs.defaultView === "lista" ? "on" : ""} onClick={() => setPref("defaultView", "lista")}>Lista</button>
+                  <button className={prefs.defaultView === "mes" ? "on" : ""} onClick={() => setPref("defaultView", "mes")}>Mês</button>
+                  <button className={prefs.defaultView === "semana" ? "on" : ""} onClick={() => setPref("defaultView", "semana")}>Semana</button>
+                  <button className={prefs.defaultView === "mapa" ? "on" : ""} onClick={() => setPref("defaultView", "mapa")}>Mapa</button>
+                </div>
+              </div>
+
+              <div className="lo-group">
                 <div className="lo-label">Lado do console</div>
                 <div className="lo-seg">
                   <button className={prefs.consoleSide === "left" ? "on" : ""} onClick={() => setPref("consoleSide", "left")}>Esquerda</button>
@@ -1860,7 +1888,7 @@ function AppInner() {
                 <div className={"lo-switch" + (prefs.showSub ? " on" : "")}><span /></div>
               </div>
 
-              <button className="lo-reset" onClick={() => setPrefs({ consoleSide: "right", showStats: true, pagesPos: "bottom", showSub: true, density: "comfort" })}>
+              <button className="lo-reset" onClick={() => setPrefs({ consoleSide: "right", showStats: true, pagesPos: "bottom", showSub: true, density: "comfort", defaultView: "mes" })}>
                 Restaurar padrão
               </button>
             </div>
