@@ -239,8 +239,16 @@ select.ef-input{cursor:pointer}
 
 /* view de mapa */
 .mapview{display:flex; gap:14px; height:100%; min-height:0}
-.map-frame{flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); min-height:340px}
-.map-frame iframe{display:block; width:100%; height:100%; filter:grayscale(.2) contrast(.95)}
+.map-frame{flex:1; min-width:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; background:var(--panel); min-height:340px; position:relative}
+.leaflet-host{width:100%; height:100%; background:#1a1a1a}
+.map-loading{display:flex; align-items:center; justify-content:center; height:100%; color:var(--mid); font-size:13px}
+/* pin customizado com etiqueta de nome */
+.pin-wrap{position:relative; overflow:visible !important}
+.pin-mark{position:absolute; left:-7px; top:-7px; width:14px; height:14px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:2px solid #fff; box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.pin-label{position:absolute; left:50%; bottom:12px; transform:translateX(-50%); white-space:nowrap; background:rgba(20,22,26,.92); color:#fff; font-family:'Inter',sans-serif; font-size:11px; font-weight:600; padding:3px 8px; border-radius:6px; border:1px solid var(--line); box-shadow:0 3px 10px rgba(0,0,0,.45); pointer-events:none; max-width:160px; overflow:hidden; text-overflow:ellipsis}
+.pin-label::after{content:""; position:absolute; left:50%; top:100%; transform:translateX(-50%); border:4px solid transparent; border-top-color:rgba(20,22,26,.92)}
+.map-fail{font-size:10px; color:var(--danger); background:rgba(224,106,106,.14); padding:1px 6px; border-radius:4px; margin-left:6px}
+.map-pending{color:var(--low); margin-left:6px}
 .map-list{width:300px; flex-shrink:0; display:flex; flex-direction:column; gap:7px; overflow-y:auto; padding-right:2px}
 .map-list-h{font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--low); padding:2px 2px 6px}
 .map-item{display:flex; gap:0; background:var(--panel); border:1px solid var(--line); border-radius:9px; overflow:hidden; cursor:pointer; text-align:left; transition:border-color .14s; align-items:stretch}
@@ -710,6 +718,97 @@ async function askAI(text, commitments) {
 /* ---------- app ---------- */
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
+// carrega o Leaflet (CSS+JS) uma vez via CDN
+function useLeaflet() {
+  const [ready, setReady] = useState(typeof window !== "undefined" && window.L);
+  useEffect(() => {
+    if (typeof window === "undefined" || window.L) { setReady(true); return; }
+    if (!document.getElementById("leaflet-css")) {
+      const link = document.createElement("link");
+      link.id = "leaflet-css"; link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    let s = document.getElementById("leaflet-js");
+    if (!s) {
+      s = document.createElement("script");
+      s.id = "leaflet-js"; s.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      s.onload = () => setReady(true);
+      document.body.appendChild(s);
+    } else {
+      s.addEventListener("load", () => setReady(true));
+    }
+  }, []);
+  return ready;
+}
+
+// Mapa com todos os pins, etiqueta com nome sempre visível, zoom automático
+function MapView({ jobs, catColor, onPick, focus }) {
+  const ready = useLeaflet();
+  const elRef = useRef(null);
+  const mapRef = useRef(null);
+  const layerRef = useRef(null);
+  const markersRef = useRef({});
+
+  useEffect(() => {
+    if (!ready || !elRef.current || !window.L) return;
+    const L = window.L;
+    if (!mapRef.current) {
+      mapRef.current = L.map(elRef.current, { zoomControl: true, attributionControl: true })
+        .setView([-22.92, -42.5], 9);
+      L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
+        attribution: "© OpenStreetMap © CARTO", maxZoom: 19,
+      }).addTo(mapRef.current);
+      layerRef.current = L.layerGroup().addTo(mapRef.current);
+    }
+    const map = mapRef.current, layer = layerRef.current;
+    layer.clearLayers();
+    markersRef.current = {};
+    const pts = [];
+    jobs.forEach(j => {
+      if (!j.coords || typeof j.coords.lat !== "number") return;
+      const color = catColor(j);
+      const icon = L.divIcon({
+        className: "pin-wrap",
+        html: `<div class="pin-label">${(j.titulo || "").replace(/</g, "&lt;")}</div>
+               <div class="pin-mark" style="background:${color}"></div>`,
+        iconSize: [0, 0], iconAnchor: [0, 0],
+      });
+      const m = L.marker([j.coords.lat, j.coords.lng], { icon }).addTo(layer);
+      m.on("click", () => onPick && onPick(j.id));
+      markersRef.current[j.id] = [j.coords.lat, j.coords.lng];
+      pts.push([j.coords.lat, j.coords.lng]);
+    });
+    if (pts.length === 1) map.setView(pts[0], 14);
+    else if (pts.length > 1) map.fitBounds(pts, { padding: [60, 60], maxZoom: 14 });
+    setTimeout(() => map.invalidateSize(), 100);
+  }, [ready, jobs, catColor, onPick]);
+
+  // foca no pin selecionado na lista
+  useEffect(() => {
+    if (!mapRef.current || !focus) return;
+    const p = markersRef.current[focus];
+    if (p) mapRef.current.flyTo(p, 14, { duration: 0.6 });
+  }, [focus]);
+
+  if (!ready) return <div className="map-loading">Carregando mapa…</div>;
+  return <div ref={elRef} className="leaflet-host" />;
+}
+
+// geocoding gratuito via Nominatim (OpenStreetMap) — converte endereço em lat/lng
+async function geocode(local) {
+  if (!local || !local.trim()) return null;
+  try {
+    const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(local.trim())}`;
+    const r = await fetch(url, { headers: { "Accept": "application/json" } });
+    const data = await r.json();
+    if (Array.isArray(data) && data[0]) {
+      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+    }
+  } catch (e) { /* falha silenciosa */ }
+  return null;
+}
+
 function AppInner() {
   const [items, setItems] = useState([]);
   const [loaded, setLoaded] = useState(false);
@@ -765,6 +864,7 @@ function AppInner() {
                 notas: typeof c.notas === "string" ? c.notas : "",
                 hora: typeof c.hora === "string" ? c.hora : null,
                 local: typeof c.local === "string" ? c.local : "",
+                coords: c.coords && typeof c.coords.lat === "number" ? c.coords : (c.coords && c.coords.failed ? c.coords : null),
                 categoria: CATEGORIA[inferCategoria(c)] ? inferCategoria(c) : "trabalho",
                 datas,
                 data: datas[0] || null,
@@ -850,6 +950,18 @@ function AppInner() {
       setMessages(m => [...m, { role: "bot", warn: true, text: `⚠ Conflito de trabalho em ${quando}: ${nomes}. Reunião e pessoal podem se sobrepor, mas dois trabalhos firmes no mesmo dia costuma apertar. Abri o dia pra você decidir — mover um pra outra data, marcar como incerto ou manter os dois.` }]);
       setSelDay(iso);
     }
+  }, [items, loaded]);
+
+  // geocodifica jobs que têm local mas ainda não têm coordenadas (ex: vindos do console)
+  const geocoding = useRef(false);
+  useEffect(() => {
+    if (!loaded || geocoding.current) return;
+    const pending = items.find(c => c.local && c.local.trim() && !c.coords);
+    if (!pending) return;
+    geocoding.current = true;
+    geocode(pending.local).then(coords => {
+      setItems(p => p.map(x => x.id === pending.id ? { ...x, coords: coords || { failed: true } } : x));
+    }).finally(() => { geocoding.current = false; });
   }, [items, loaded]);
 
   function applyOps(ops) {
@@ -942,9 +1054,14 @@ function AppInner() {
       datas: datesOf(c).slice(),
     });
   };
-  const saveEdit = () => {
+  const saveEdit = async () => {
     if (!editForm || !editForm.titulo.trim()) return;
     const datas = normDates(editForm.datas);
+    const local = editForm.local.trim();
+    const prev = items.find(x => x.id === editJob);
+    // só re-geocodifica se o local mudou
+    let coords = prev && prev.local === local ? (prev.coords || null) : null;
+    if (local && !coords) coords = await geocode(local);
     setItems(p => p.map(x => x.id === editJob ? {
       ...x,
       titulo: editForm.titulo.trim(),
@@ -954,7 +1071,8 @@ function AppInner() {
       status: STATUS[editForm.status] ? editForm.status : "confirmado",
       prioridade: editForm.prioridade || "media",
       hora: editForm.hora.trim() || null,
-      local: editForm.local.trim(),
+      local,
+      coords: local ? coords : null,
       notas: editForm.notas.trim(),
       datas,
       data: datas[0] || null,
@@ -1469,38 +1587,39 @@ function AppInner() {
 
           {view === "mapa" && (() => {
             const withLoc = visible.filter(c => c.local && c.local.trim());
-            const sel = withLoc.find(c => c.id === mapSel) || withLoc[0] || null;
+            const mapped = withLoc.filter(c => c.coords && typeof c.coords.lat === "number");
+            const pendingGeo = withLoc.filter(c => !c.coords);
             return (
               <div className="mapview">
                 {withLoc.length === 0 ? (
                   <div className="empty">
                     <div className="big">📍</div>
                     <h3>Nenhum job com local</h3>
-                    <p>Adicione um local nos compromissos (pelo botão Editar ou escrevendo no console) pra vê-los aqui no mapa.</p>
+                    <p>Adicione um local nos compromissos (pelo botão Editar ou escrevendo no console) pra vê-los aqui no mapa, todos juntos.</p>
                   </div>
                 ) : (
                   <>
                     <div className="map-frame">
-                      <iframe
-                        key={sel ? sel.id : "none"}
-                        title="Mapa do job"
-                        width="100%" height="100%" style={{ border: 0 }}
-                        loading="lazy" referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://maps.google.com/maps?q=${encodeURIComponent(sel.local)}&output=embed`}
-                      />
+                      {mapped.length > 0
+                        ? <MapView jobs={mapped} catColor={(j) => CATEGORIA[catOf(j)].color} onPick={(id) => setMapSel(id)} focus={mapSel} />
+                        : <div className="map-loading">{pendingGeo.length ? "Localizando endereços no mapa…" : "Nenhum endereço pôde ser localizado."}</div>}
                     </div>
                     <div className="map-list scroll">
-                      <div className="map-list-h">{withLoc.length} {withLoc.length === 1 ? "job com local" : "jobs com local"}</div>
+                      <div className="map-list-h">{withLoc.length} {withLoc.length === 1 ? "job com local" : "jobs com local"}{pendingGeo.length ? ` · ${pendingGeo.length} localizando…` : ""}</div>
                       {withLoc.map(c => {
                         const kc = CATEGORIA[catOf(c)].color;
+                        const located = c.coords && typeof c.coords.lat === "number";
+                        const failed = c.coords && c.coords.failed;
                         return (
-                          <button key={c.id} className={"map-item" + (sel && sel.id === c.id ? " on" : "")} onClick={() => setMapSel(c.id)}>
+                          <button key={c.id} className={"map-item" + (mapSel === c.id ? " on" : "")} onClick={() => setMapSel(c.id)}>
                             <span className="map-item-bar" style={{ background: kc }} />
                             <div className="map-item-body">
                               <div className="map-item-title">{c.titulo}</div>
                               <div className="map-item-local">
                                 <svg viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /><circle cx="12" cy="10" r="2.5" stroke="currentColor" strokeWidth="2" /></svg>
                                 {c.local}
+                                {failed && <span className="map-fail" title="Endereço não localizado">não localizado</span>}
+                                {!located && !failed && <span className="map-pending">…</span>}
                               </div>
                               <div className="map-item-meta mono">{fmtWhen(repISO(c), c.hora)}{c.cliente ? ` · ${c.cliente}` : ""}</div>
                             </div>
