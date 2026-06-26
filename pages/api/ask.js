@@ -19,12 +19,12 @@ Converta a mensagem em JSON. SEMPRE resolva qualquer referência de tempo (amanh
 categoria: trabalho(captação,edição,render,entrega,gravação)|reuniao(call,briefing)|pessoal(médico,academia,família)
 status: confirmado(padrão)|incerto(talvez,a confirmar)|em_andamento|concluido
 tipo: captacao|edicao|producao|reuniao|entrega|pessoal|outro. prioridade: media(padrão)|alta|baixa.
-datas: array YYYY-MM-DD (vários dias ok). cliente só p/ trabalho/reuniao.
+datas: array YYYY-MM-DD (vários dias ok). cliente só p/ trabalho/reuniao. local: endereço/lugar se mencionado (ex: "no sítio em Araruama", "estúdio X").
 Conflito: 2 trabalhos confirmados no mesmo dia → avise no reply (reuniao/pessoal nunca conflitam).
 ${ctx ? `Agenda (id|titulo|cliente|cat|status|datas):\n${ctx}` : "Agenda vazia."}
 Ops: add|update|complete(→concluido)|confirm(→confirmado)|delete(commitment={}). Use id existente p/ editar.
 Responda SÓ JSON minificado:
-{"reply":"frase curta","operations":[{"type":"add","id":null,"commitment":{"titulo":"","cliente":"","categoria":"","tipo":"","datas":[],"hora":null,"status":"confirmado","prioridade":"media","notas":""}}]}
+{"reply":"frase curta","operations":[{"type":"add","id":null,"commitment":{"titulo":"","cliente":"","categoria":"","tipo":"","datas":[],"hora":null,"local":"","status":"confirmado","prioridade":"media","notas":""}}]}
 reply≤1 frase. Sem tarefa→operations:[].`;
 
   try {
