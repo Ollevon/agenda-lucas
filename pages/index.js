@@ -25,6 +25,20 @@ const STYLE = `
 .mono{font-family:'JetBrains Mono',monospace}
 .disp{font-family:'Space Grotesk',sans-serif}
 
+/* preferências de layout (Nível 1) */
+.ag-root.console-left{flex-direction:row-reverse}
+.ag-root.console-left .ag-chat{border-left:none; border-right:1px solid var(--line)}
+.ag-root.console-left .chat-grip{left:auto; right:-4px}
+.ag-main.pages-top .pagebar{order:-1; border-top:none; border-bottom:1px solid var(--line)}
+/* densidade compacta */
+.ag-root.compact .ag-board{padding-top:10px; padding-bottom:60px}
+.ag-root.compact .job-body{padding:10px 13px}
+.ag-root.compact .job-title{font-size:14px}
+.ag-root.compact .ag-head{padding-top:14px; padding-bottom:10px}
+.ag-root.compact .ag-stats{margin-top:10px}
+.ag-root.compact .stat{padding:8px 12px}
+.ag-root.compact .cal-cell{min-height:64px}
+
 /* layout */
 .ag-main{flex:1; min-width:0; display:flex; flex-direction:column; overflow:hidden}
 .ag-chat{width:340px; flex-shrink:0; border-left:1px solid var(--line); display:flex; flex-direction:column; background:var(--panel); position:relative}
@@ -232,6 +246,24 @@ select.ef-input{cursor:pointer}
 .ef-save{font-size:13px; font-weight:600; color:#10120f; background:var(--brand); border:none; border-radius:7px; padding:9px 18px; cursor:pointer; transition:opacity .14s}
 .ef-save:disabled{opacity:.4; cursor:default}
 .act.edit:hover{color:var(--andamento); border-color:rgba(91,143,214,.45)}
+
+/* painel de layout */
+.layout-modal{max-width:480px}
+.lo-group{margin-bottom:18px}
+.lo-label{font-size:12px; font-weight:600; color:var(--mid); margin-bottom:8px}
+.lo-seg{display:flex; gap:6px; background:var(--void); border:1px solid var(--line); border-radius:8px; padding:4px}
+.lo-seg button{flex:1; padding:8px 10px; border:none; background:transparent; color:var(--mid); font-family:'Inter',sans-serif; font-size:13px; font-weight:500; border-radius:5px; cursor:pointer; transition:all .14s}
+.lo-seg button:hover{color:var(--hi)}
+.lo-seg button.on{background:var(--brand); color:#10120f; font-weight:600}
+.lo-toggle{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 0; border-top:1px solid var(--line); cursor:pointer}
+.lo-tl{font-size:13.5px; font-weight:500; color:var(--hi)}
+.lo-td{font-size:11.5px; color:var(--low); margin-top:2px}
+.lo-switch{width:42px; height:24px; border-radius:99px; background:var(--raised); border:1px solid var(--line); flex-shrink:0; position:relative; transition:background .18s}
+.lo-switch span{position:absolute; top:2px; left:2px; width:18px; height:18px; border-radius:50%; background:var(--mid); transition:transform .18s, background .18s}
+.lo-switch.on{background:var(--brand); border-color:var(--brand)}
+.lo-switch.on span{transform:translateX(18px); background:#10120f}
+.lo-reset{width:100%; margin-top:16px; padding:10px; background:transparent; border:1px solid var(--line); border-radius:8px; color:var(--mid); font-size:13px; font-weight:500; cursor:pointer; transition:all .14s}
+.lo-reset:hover{color:var(--hi); border-color:#4a4e55}
 
 /* local no cartão */
 .job-local{display:inline-flex; align-items:center; gap:5px; margin-top:7px; font-size:12px; color:var(--andamento); text-decoration:none; max-width:100%; transition:color .14s}
@@ -843,6 +875,14 @@ function AppInner() {
   const [headColl, setHeadColl] = useState(false);
   const [chatW, setChatW] = useState(340);
   const resizing = useRef(false);
+  const [layoutOpen, setLayoutOpen] = useState(false);
+  const [prefs, setPrefs] = useState({
+    consoleSide: "right",   // right | left
+    showStats: true,        // contadores no topo
+    pagesPos: "bottom",     // bottom | top
+    showSub: true,          // subtítulo "sala de corte · Lucas"
+    density: "comfort",     // comfort | compact
+  });
   const [menuOpen, setMenuOpen] = useState(false);
   const [splash, setSplash] = useState(true);
   const [splashOut, setSplashOut] = useState(false);
@@ -916,11 +956,17 @@ function AppInner() {
   useEffect(() => {
     const saved = Number(localStorage.getItem("chatW"));
     if (saved >= 280 && saved <= 720) setChatW(saved);
+    try {
+      const p = JSON.parse(localStorage.getItem("agendaPrefs") || "null");
+      if (p && typeof p === "object") setPrefs(prev => ({ ...prev, ...p }));
+    } catch (e) {}
 
     const onMove = (e) => {
       if (!resizing.current) return;
       const x = e.touches ? e.touches[0].clientX : e.clientX;
-      const w = Math.min(720, Math.max(280, window.innerWidth - x));
+      const w = sideRef.current === "left"
+        ? Math.min(720, Math.max(280, x))
+        : Math.min(720, Math.max(280, window.innerWidth - x));
       setChatW(w);
     };
     const onUp = () => {
@@ -948,6 +994,16 @@ function AppInner() {
     document.body.style.userSelect = "none";
     e.preventDefault();
   };
+
+  // salva preferências de layout sempre que mudarem
+  const prefsReady = useRef(false);
+  const sideRef = useRef(prefs.consoleSide);
+  useEffect(() => { sideRef.current = prefs.consoleSide; }, [prefs.consoleSide]);
+  useEffect(() => {
+    if (!prefsReady.current) { prefsReady.current = true; return; }
+    try { localStorage.setItem("agendaPrefs", JSON.stringify(prefs)); } catch (e) {}
+  }, [prefs]);
+  const setPref = (k, v) => setPrefs(p => ({ ...p, [k]: v }));
 
   // avisa quando um novo conflito de trabalho aparece
   useEffect(() => {
@@ -1356,7 +1412,7 @@ function AppInner() {
   };
 
   return (
-    <div className="ag-root">
+    <div className={"ag-root" + (prefs.consoleSide === "left" ? " console-left" : "") + (prefs.density === "compact" ? " compact" : "")}>
       <style>{STYLE}</style>
 
       {splash && (
@@ -1410,13 +1466,13 @@ function AppInner() {
       )}
 
       {/* DASHBOARD */}
-      <div className="ag-main">
+      <div className={"ag-main" + (prefs.pagesPos === "top" ? " pages-top" : "")}>
         <div className={"ag-head" + (headColl ? " mini" : "")}>
           <div className="ag-brandrow">
             <div className="ag-mark"><span /></div>
             <div>
               <div className="ag-title disp">Agenda</div>
-              <div className="ag-sub">sala de corte · Lucas</div>
+              {prefs.showSub && <div className="ag-sub">sala de corte · Lucas</div>}
             </div>
             {conflictDays.size > 0 && (
               <button className="confl-signal" onClick={() => setSelDay([...conflictDays].sort()[0])}
@@ -1436,6 +1492,9 @@ function AppInner() {
                   ? <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
                   : <path d="M6 15l6-6 6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />}
               </svg>
+            </button>
+            <button className="head-toggle" onClick={() => setLayoutOpen(true)} title="Personalizar layout" aria-label="Personalizar layout">
+              <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="14" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="3" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /><rect x="14" y="14" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="2" /></svg>
             </button>
             <div className="hmenu">
               <button className="hbtn" onClick={() => setMenuOpen(v => !v)} aria-label="Dados e backup">
@@ -1466,7 +1525,7 @@ function AppInner() {
                 onChange={(e) => { const f = e.target.files[0]; if (f) importBackup(f); e.target.value = ""; }} />
             </div>
           </div>
-          {!headColl && (
+          {!headColl && prefs.showStats && (
             <div className="ag-stats">
               <div className="stat"><span className="n disp">{nHoje}</span><span className="l">hoje</span></div>
               <div className="stat"><span className="n disp">{nSemana}</span><span className="l">esta semana</span></div>
@@ -1745,6 +1804,65 @@ function AppInner() {
               {(eventsByDay[selDay] || []).length
                 ? (eventsByDay[selDay]).map(c => renderJob(c, selDay))
                 : <div className="modal-empty">Nenhum compromisso neste dia.</div>}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {layoutOpen && (
+        <div className="modal-bk" onClick={() => setLayoutOpen(false)}>
+          <div className="modal layout-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-h">
+              <div className="modal-ht">
+                <div className="modal-d disp">Personalizar layout</div>
+                <div className="modal-s">As mudanças aplicam na hora e ficam salvas</div>
+              </div>
+              <button className="modal-x" onClick={() => setLayoutOpen(false)} aria-label="Fechar">✕</button>
+            </div>
+            <div className="modal-body scroll">
+              <div className="lo-group">
+                <div className="lo-label">Lado do console</div>
+                <div className="lo-seg">
+                  <button className={prefs.consoleSide === "left" ? "on" : ""} onClick={() => setPref("consoleSide", "left")}>Esquerda</button>
+                  <button className={prefs.consoleSide === "right" ? "on" : ""} onClick={() => setPref("consoleSide", "right")}>Direita</button>
+                </div>
+              </div>
+
+              <div className="lo-group">
+                <div className="lo-label">Posição das abas de visualização</div>
+                <div className="lo-seg">
+                  <button className={prefs.pagesPos === "top" ? "on" : ""} onClick={() => setPref("pagesPos", "top")}>Topo</button>
+                  <button className={prefs.pagesPos === "bottom" ? "on" : ""} onClick={() => setPref("pagesPos", "bottom")}>Base</button>
+                </div>
+              </div>
+
+              <div className="lo-group">
+                <div className="lo-label">Densidade</div>
+                <div className="lo-seg">
+                  <button className={prefs.density === "comfort" ? "on" : ""} onClick={() => setPref("density", "comfort")}>Confortável</button>
+                  <button className={prefs.density === "compact" ? "on" : ""} onClick={() => setPref("density", "compact")}>Compacta</button>
+                </div>
+              </div>
+
+              <div className="lo-toggle" onClick={() => setPref("showStats", !prefs.showStats)}>
+                <div>
+                  <div className="lo-tl">Mostrar contadores</div>
+                  <div className="lo-td">Hoje, esta semana, a confirmar, atrasados</div>
+                </div>
+                <div className={"lo-switch" + (prefs.showStats ? " on" : "")}><span /></div>
+              </div>
+
+              <div className="lo-toggle" onClick={() => setPref("showSub", !prefs.showSub)}>
+                <div>
+                  <div className="lo-tl">Mostrar subtítulo</div>
+                  <div className="lo-td">"sala de corte · Lucas" abaixo do nome</div>
+                </div>
+                <div className={"lo-switch" + (prefs.showSub ? " on" : "")}><span /></div>
+              </div>
+
+              <button className="lo-reset" onClick={() => setPrefs({ consoleSide: "right", showStats: true, pagesPos: "bottom", showSub: true, density: "comfort" })}>
+                Restaurar padrão
+              </button>
             </div>
           </div>
         </div>
